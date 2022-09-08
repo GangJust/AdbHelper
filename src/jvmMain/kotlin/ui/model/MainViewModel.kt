@@ -4,6 +4,9 @@ import base.viewmodel.ViewModel
 import ui.data.MainData
 import utils.GTextUtils
 import utils.ShellUtils
+import java.io.BufferedInputStream
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 class MainViewModel : ViewModel<MainData, MainData.FinalMainData>() {
     private var charsetName = ShellUtils.CHAR_SET_GBK
@@ -62,16 +65,16 @@ class MainViewModel : ViewModel<MainData, MainData.FinalMainData>() {
         val process = ShellUtils.adbShell(null, "dumpsys activity | grep -i run | grep ${viewData.mPackageName.value}")
         val contents = getCommonResultAll(process)
         if (contents.contains("获取失败")) {
-            viewData.mActivityRecordList.value = GTextUtils.to(contents)
+            viewData.mActivityRecordList.value = listOf(GTextUtils.to(contents))
             return
         }
         val stringList = contents.split("\n")
-        var content: String = ""
+        val contentList: MutableList<String> = mutableListOf()
         for (s in stringList) {
             val s1 = s.substring(s.indexOf("u0") + 2, s.lastIndexOf(" t"))
-            content = "$content\n${GTextUtils.to(s1)}"
+            contentList.add(GTextUtils.to(s1))
         }
-        viewData.mActivityRecordList.value = GTextUtils.to(content)
+        viewData.mActivityRecordList.value = contentList
     }
 
     /**
@@ -86,10 +89,7 @@ class MainViewModel : ViewModel<MainData, MainData.FinalMainData>() {
             resultContents.indexOf(startText) + startText.length,
             resultContents.lastIndexOf(endText)
         )
-
-        //println("resultContents: $resultContents")
-        //println("resultContent: $resultContent")
-
+        process.destroy()
         return resultContent
     }
 
@@ -101,6 +101,7 @@ class MainViewModel : ViewModel<MainData, MainData.FinalMainData>() {
         if (GTextUtils.isEmpty(resultContents)) {
             return "获取失败，可能存在以下情况（如：锁屏、黑屏等）"
         }
+        process.destroy()
         return resultContents
     }
 }

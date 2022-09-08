@@ -7,7 +7,7 @@ class MainData : ViewData<MainData.FinalMainData>() {
     var mPackageName = mutableStateOf("")
     var mResumedActivity = mutableStateOf("")
     var mLastPausedActivity = mutableStateOf("")
-    var mActivityRecordList = mutableStateOf("")
+    var mActivityRecordList = mutableStateOf(listOf(""))
 
     override fun finalData() = FinalMainData(
         mPackageName.value,
@@ -20,6 +20,6 @@ class MainData : ViewData<MainData.FinalMainData>() {
         val mPackageName: String,
         val mResumedActivity: String,
         val mLastPausedActivity: String,
-        val mActivityRecordList: String,
+        val mActivityRecordList: List<String>,
     ) : FinalViewData()
 }
