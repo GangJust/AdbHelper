@@ -4,23 +4,24 @@ import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
 
-object ShellUtils {
+object CommandLineUtils {
     const val CHAR_SET_UTF_8 = "UTF-8"
 
     const val CHAR_SET_GBK = "GBK"
 
     const val CHAR_SET_GB2312 = "GB2312"
 
-    fun exec(vararg command: String): Process {
+    fun winExec(vararg command: String): Process {
+        println("execute command: ${command.joinToString(" ")}")
         return Runtime.getRuntime().exec(command)
     }
 
-    fun adbShell(directory: File? = null, vararg command: String): Process {
-        val commandList = mutableListOf("cmd", "/c", "adb", "shell") //进入 adb shell 模式
-        commandList.addAll(command)
+    fun winExec(directory: File? = null, command: String): Process {
+        val commandLine = mutableListOf("cmd", "/c", command) //进入cmd, 执行命令
+        println("execute command: $command")
         return ProcessBuilder()
             .directory(directory)
-            .command(commandList)
+            .command(commandLine)
             .start()
     }
 
@@ -36,5 +37,10 @@ object ShellUtils {
         val result = streamReader.readLine()
         streamReader.close()
         return result
+    }
+
+    fun printResult(process: Process, charsetName: String = "UTF-8") {
+        println("常规内容: ${process.inputReader().readText()}")
+        println("错误内容: ${process.errorReader().readText()}")
     }
 }

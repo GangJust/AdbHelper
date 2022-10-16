@@ -1,23 +1,21 @@
-package ui.kitview
+package compose
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
-/**
- * 垂直滚动
- */
-@Composable
+@Composable  //垂直滚动
 fun VerScrollableContainer(
+    maxWidth: Dp = Dp.Infinity,
+    maxHeight: Dp = Dp.Infinity,
     content: @Composable () -> Unit,
 ) {
     val verticalScroll = rememberScrollState(0)
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.widthIn(max = maxWidth).heightIn(max = maxHeight)) {
         Box(Modifier.verticalScroll(verticalScroll)) {
             content()
         }
@@ -28,35 +26,33 @@ fun VerScrollableContainer(
     }
 }
 
-/**
- * 水平滚动
- */
-@Composable
+@Composable  //水平滚动
 fun HorScrollableContainer(
+    maxWidth: Dp = Dp.Infinity,
+    maxHeight: Dp = Dp.Infinity,
     content: @Composable () -> Unit,
 ) {
     val horizontalScroll = rememberScrollState(0)
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.widthIn(max = maxWidth).heightIn(max = maxHeight)) {
         Box(Modifier.horizontalScroll(horizontalScroll)) {
             content()
         }
         HorizontalScrollbar(
-            modifier = Modifier.align(Alignment.CenterEnd).fillMaxWidth(),
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
             adapter = rememberScrollbarAdapter(horizontalScroll)
         )
     }
 }
 
-/**
- * 滚动(包括垂直、水平)
- */
-@Composable
+@Composable  //滚动(包括垂直、水平)
 fun ScrollableContainer(
+    maxWidth: Dp = Dp.Infinity,
+    maxHeight: Dp = Dp.Infinity,
     content: @Composable () -> Unit,
 ) {
     val verticalScroll = rememberScrollState(0)
     val horizontalScroll = rememberScrollState(0)
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.widthIn(max = maxWidth).heightIn(max = maxHeight)) {
         Box(Modifier.verticalScroll(verticalScroll).horizontalScroll(horizontalScroll)) {
             content()
         }
