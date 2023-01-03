@@ -4,10 +4,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.6.10"
-    id("org.jetbrains.compose") version "1.1.0"
+    id("org.jetbrains.compose") version "1.1.1"
 }
 
-group = "me.rain"
+group = "com.freegang"
 version = "1.0"
 
 repositories {
@@ -18,8 +18,7 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
-
-    implementation("org.ini4j:ini4j:0.5.4") // ini配置文件读写
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
 }
 
 tasks.withType<KotlinCompile> {

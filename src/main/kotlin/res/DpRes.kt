@@ -1,0 +1,5 @@
+package res
+
+object DpRes {
+
+}

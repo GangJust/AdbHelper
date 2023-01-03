@@ -6,8 +6,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
+/**
+ * @Author: Gang
+ * @Date: 2022-12-22 13:19
+ * @Description:
+ */
 @Composable  //垂直滚动
 fun VerScrollableContainer(
     maxWidth: Dp = Dp.Infinity,

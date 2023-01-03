@@ -1,23 +1,21 @@
 package compose
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.ui.graphics.Color
 import java.awt.Component
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JTextArea
 import javax.swing.TransferHandler
-import javax.swing.plaf.FileChooserUI
 
 /**
  * @Author: Gang
- * @Date: 2022/10/7 19:42
+ * @Date: 2022-12-22 13:19
  * @Description:
  */
 @Composable
@@ -29,19 +27,12 @@ fun <T : Component> SwingContainer(
     SwingPanel(
         background = background,
         modifier = modifier,
-        factory = {
-            ComposePanel().apply {
-                setContent {
-                    Box {
-                        SwingPanel(
-                            modifier = Modifier.fillMaxSize(),
-                            factory = { content() }
-                        )
-                    }
-                }
-            }
-        },
+        factory = { content() },
     )
+}
+
+fun Color.toSwingColor(): java.awt.Color {
+    return java.awt.Color(this.red, this.green, this.blue, this.alpha)
 }
 
 
