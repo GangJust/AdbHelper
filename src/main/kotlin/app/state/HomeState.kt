@@ -13,12 +13,12 @@ import utils.formatAdbCommand
 class HomeState : AbstractState<HomeLogic>() {
     override fun createLogic(): HomeLogic = HomeLogic()
 
-    val leftPaneWidth = mutableStateOf(190.dp)
+    val leftPaneWidth = mutableStateOf(168.dp)
     val leftMenuSelectIndex = mutableStateOf(0)
 
     // leftMenuIconList.size == leftMenuTitleList.size
-    val leftMenuIconList = mutableStateListOf(IconRes.browseActivity, IconRes.apkDocument)
-    val leftMenuTitleList = mutableStateListOf("活动信息", "应用管理")
+    val leftMenuIconList = mutableStateListOf(IconRes.browseActivity, IconRes.apkDocument, IconRes.portForward)
+    val leftMenuTitleList = mutableStateListOf("活动信息", "应用管理", "端口转发")
 
     val showDropdownMenu = mutableStateOf(false)
     val currentDevice = mutableStateOf("没有ADB设备")

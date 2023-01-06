@@ -31,9 +31,10 @@ fun CardButton(
     ) {
         BoxWithConstraints(
             contentAlignment = Alignment.Center,
-            modifier = modifier
-        ) {
-            content()
-        }
+            modifier = modifier,
+            content = {
+                content()
+            }
+        )
     }
 }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,16 +20,21 @@ import androidx.compose.ui.window.Dialog
 import app.model.AppDescModel
 import app.state.pages.AppManagerState
 import base.mvvm.AbstractView
+import compose.ComposeToast
+import compose.MessageComposeDialog
 import compose.SwingContainer
 import compose.TabItem
 import res.ColorRes
 import res.IconRes
 import res.TextStyleRes
+import utils.toFileLength
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
-import java.util.Arrays
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.SwingConstants
+import javax.swing.TransferHandler
 
 class AppManagerPage : AbstractView<AppManagerState>() {
     override fun createState() = AppManagerState()
@@ -43,7 +49,7 @@ class AppManagerPage : AbstractView<AppManagerState>() {
                 FloatingActionButton(
                     contentColor = Color.White,
                     backgroundColor = ColorRes.primary,
-                    onClick = { state.showApkInstallWindow.value = true },
+                    onClick = { state.showApkInstallDialog.value = true },
                     content = {
                         Icon(
                             painter = IconRes.apkInstall,
@@ -53,10 +59,10 @@ class AppManagerPage : AbstractView<AppManagerState>() {
                     }
                 )
 
-                if (state.showApkInstallWindow.value) {
+                if (state.showApkInstallDialog.value) {
                     Dialog(
                         onCloseRequest = {
-                            state.showApkInstallWindow.value = false
+                            state.showApkInstallDialog.value = false
                         },
                         title = "将Apk文件托入窗口安装",
                         content = {
@@ -90,7 +96,7 @@ class AppManagerPage : AbstractView<AppManagerState>() {
                     )
                 }
             },
-            topBar = { TopContainer() },
+            topBar = { TopBar() },
             bottomBar = {
                 BoxWithConstraints(
                     modifier = Modifier.fillMaxWidth().height(56.dp), //底部占位, 统一高度
@@ -102,7 +108,7 @@ class AppManagerPage : AbstractView<AppManagerState>() {
     }
 
     @Composable
-    private fun TopContainer() {
+    private fun TopBar() {
         Row(modifier = Modifier.padding(horizontal = 24.dp)) {
             TabItem(
                 index = 0,
@@ -122,14 +128,38 @@ class AppManagerPage : AbstractView<AppManagerState>() {
                 selected = state.currentTabIndex.value == 2,
                 onSelect = { state.currentTabIndex.value = it }
             )
+
+            //有搜索关键字, 并且有搜索内容
+            if (state.filterKeyWords.value.isNotBlank() && state.filterAppList.isNotEmpty()) {
+                TabItem(
+                    index = 3,
+                    title = "搜索 (${state.filterAppList.size})",
+                    selected = state.currentTabIndex.value == 3,
+                    onSelect = { state.currentTabIndex.value = it }
+                )
+            }
+
             Spacer(Modifier.weight(1f))
+            IconButton(
+                onClick = {
+                    // TODO: 待实现
+                    ComposeToast.show("待实现..")
+                },
+                content = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "搜索",
+                        tint = ColorRes.icon,
+                    )
+                }
+            )
             IconButton(
                 onClick = { state.reloadAppList() },
                 content = {
                     Icon(
                         imageVector = Icons.Default.Refresh,
                         contentDescription = "刷新",
-                        tint = ColorRes.divider,
+                        tint = ColorRes.icon,
                     )
                 }
             )
@@ -153,50 +183,105 @@ class AppManagerPage : AbstractView<AppManagerState>() {
     }
 
     @Composable
-    private fun AppListItem(
-        appDesc: AppDescModel,
-    ) {
+    private fun AppListItem(appDesc: AppDescModel) {
         Card(
             elevation = 2.dp,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-        ) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
-                ItemView(
-                    title = "包       名:",
-                    value = appDesc.packageName,
-                )
-                ItemView(
-                    title = "版  本  名:",
-                    value = appDesc.versionName,
-                )
-                ItemView(
-                    title = "版  本  号:",
-                    value = appDesc.versionCode,
-                )
-                ItemView(
-                    title = "编译SDK:",
-                    value = appDesc.targetSdk,
-                )
-                ItemView(
-                    title = "最小SDK:",
-                    value = appDesc.minSdk,
-                )
-                ItemView(
-                    title = "系统应用:",
-                    value = if (appDesc.isSystemApp) "是" else "否",
-                )
-                ItemView(
-                    title = "签名版本:",
-                    value = "v${appDesc.apkSigningVersion}",
-                )
-                ItemView(
-                    title = "安装路径:",
-                    value = appDesc.installedPath,
-                    singleLine = false,
-                )
+            content = {
+                Box {
+                    Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                        ItemView(
+                            title = "包       名:",
+                            value = appDesc.packageName,
+                        )
+                        ItemView(
+                            title = "版  本  名:",
+                            value = appDesc.versionName,
+                        )
+                        ItemView(
+                            title = "版  本  号:",
+                            value = appDesc.versionCode,
+                        )
+                        ItemView(
+                            title = "编译SDK:",
+                            value = appDesc.targetSdk,
+                        )
+                        ItemView(
+                            title = "最小SDK:",
+                            value = appDesc.minSdk,
+                        )
+                        ItemView(
+                            title = "系统应用:",
+                            value = if (appDesc.isSystemApp) "是" else "否",
+                        )
+                        ItemView(
+                            title = "签名版本:",
+                            value = "v${appDesc.apkSigningVersion}",
+                        )
+                        ItemView(
+                            title = "应用大小:",
+                            value = appDesc.length.toFileLength(),
+                        )
+                        ItemView(
+                            title = "安装路径:",
+                            value = appDesc.installedPath,
+                            singleLine = false,
+                        )
+                    }
+
+                    BoxWithConstraints(modifier = Modifier.align(Alignment.TopEnd)) {
+                        Row {
+                            IconButton(
+                                onClick = {
+                                    //如果大于200M
+                                    if (appDesc.length > 200 * 1024 * 1024) {
+                                        MessageComposeDialog
+                                            .setTitle("大文件提示")
+                                            .setMessage("App文件较大, 耗时可能达到分钟级别!")
+                                            .setCancelText("取消")
+                                            .setConfirmText("提取")
+                                            .setConfirmCallback { state.exportNotes(appDesc) }
+                                            .show()
+                                        return@IconButton
+                                    }
+                                    state.exportNotes(appDesc)
+                                },
+                                content = {
+                                    Icon(
+                                        painter = IconRes.exportNotes,
+                                        contentDescription = "导出Apk",
+                                        tint = ColorRes.icon,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            )
+                            if (!appDesc.isSystemApp) {
+                                IconButton(
+                                    onClick = {
+                                        MessageComposeDialog
+                                            .setTitle("提示")
+                                            .setMessage("确定卸载该应用么?")
+                                            .setCancelText("取消")
+                                            .setConfirmText("卸载")
+                                            .setConfirmCallback { state.uninstallApp(appDesc) }
+                                            .show()
+                                    },
+                                    content = {
+                                        Icon(
+                                            painter = IconRes.delete,
+                                            contentDescription = "卸载Apk",
+                                            tint = ColorRes.icon,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             }
-        }
+        )
     }
 
     @Composable
@@ -208,20 +293,21 @@ class AppManagerPage : AbstractView<AppManagerState>() {
         Row(
             verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
             modifier = Modifier.padding(vertical = 2.dp),
-        ) {
-            Text(
-                text = title,
-                style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.widthIn(min = 80.dp).padding(end = 4.dp)
-            )
-            BasicTextField(
-                value = value,
-                textStyle = TextStyleRes.bodyMedium,
-                readOnly = true,
-                singleLine = singleLine,
-                onValueChange = { /*禁止修改*/ },
-                modifier = Modifier.weight(1f)
-            )
-        }
+            content = {
+                Text(
+                    text = title,
+                    style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.widthIn(min = 80.dp).padding(end = 4.dp)
+                )
+                BasicTextField(
+                    value = value,
+                    textStyle = TextStyleRes.bodyMedium,
+                    readOnly = true,
+                    singleLine = singleLine,
+                    onValueChange = { /*禁止修改*/ },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        )
     }
 }

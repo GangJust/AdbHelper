@@ -12,6 +12,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import app.view.HomeUI
 import base.mvvm.*
+import compose.LoadingContainer
+import compose.MessageDialogContainer
 import compose.ToastContainer
 import res.ColorRes
 
@@ -59,12 +61,16 @@ class App(private var application: ApplicationScope) : AbstractView<AppState>() 
                     modifier = Modifier.padding(12.dp),
                 ) {
                     ToastContainer {
-                        ViewCompose {
-                            HomeUI(
-                                application = application,
-                                window = this,
-                                windowState = windowState,
-                            )
+                        LoadingContainer(windowScope = this) {
+                            MessageDialogContainer {
+                                ViewCompose {
+                                    HomeUI(
+                                        application = application,
+                                        windowScope = this,
+                                        windowState = windowState,
+                                    )
+                                }
+                            }
                         }
                     }
                 }

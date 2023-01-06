@@ -12,6 +12,7 @@ object IconRes {
     val browseActivity = readIconPainter("icon/ic_browse_activity.svg")
     val apkDocument = readIconPainter("icon/ic_apk_document.svg")
     val apkInstall = readIconPainter("icon/ic_apk_install.svg")
+    val portForward = readIconPainter("icon/ic_port_forward.svg")
     val adb = readIconPainter("icon/ic_adb.svg")
     val exportNotes = readIconPainter("icon/ic_export_notes.svg")
     val delete = readIconPainter("icon/ic_delete.svg")

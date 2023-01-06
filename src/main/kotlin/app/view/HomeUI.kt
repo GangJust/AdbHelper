@@ -20,6 +20,7 @@ import androidx.compose.ui.window.WindowState
 import app.state.HomeState
 import app.view.pages.ActivityPage
 import app.view.pages.AppManagerPage
+import app.view.pages.PortForwardPage
 import app.view.pages.UnknownPage
 import base.mvvm.AbstractView
 import base.mvvm.StateManager
@@ -31,7 +32,7 @@ import res.TextStyleRes
 
 class HomeUI(
     private val application: ApplicationScope,
-    private val window: WindowScope,
+    private val windowScope: WindowScope,
     private val windowState: WindowState,
 ) : AbstractView<HomeState>() {
     override fun createState(): HomeState = HomeState()
@@ -60,11 +61,11 @@ class HomeUI(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 //头部Logo
-                window.WindowDraggableArea {
+                windowScope.WindowDraggableArea {
                     BoxWithConstraints {
                         Text(
                             text = "ADB Helper",
-                            style = TextStyle(color = ColorRes.text, fontSize = 28.sp),
+                            style = TextStyle(color = ColorRes.text, fontSize = 24.sp),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth().padding(top = 48.dp, bottom = 24.dp)
                         )
@@ -199,7 +200,7 @@ class HomeUI(
     private fun RightContent() {
         Column {
             //顶部操作条
-            window.WindowDraggableArea {
+            windowScope.WindowDraggableArea {
                 BoxWithConstraints {
                     Row(
                         horizontalArrangement = Arrangement.End,
@@ -238,6 +239,7 @@ class HomeUI(
             //主要内容
             val activityHistoryPage = ActivityPage()
             val appManagerPage = AppManagerPage()
+            val portForwardPage = PortForwardPage()
             val unknownPage = UnknownPage(message = "哎呀, 正在码不停蹄中..")
 
             BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -245,6 +247,7 @@ class HomeUI(
                     when (state.leftMenuSelectIndex.value) {
                         0 -> activityHistoryPage
                         1 -> appManagerPage
+                        2 -> portForwardPage
                         else -> unknownPage
                     }
                 }

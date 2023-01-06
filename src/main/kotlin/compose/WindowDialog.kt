@@ -22,9 +22,11 @@ import androidx.compose.ui.window.DialogState
 import res.ColorRes
 import res.TextStyleRes
 
-class WindowDialog(show: Boolean) {
+/// Dialog控制器
+class WindowDialogController(show: Boolean) {
     private val _dialogState = DialogState()
     private val dialogController = mutableStateOf(show)
+    var bundle: Any? = null
 
     companion object {
 
@@ -35,7 +37,6 @@ class WindowDialog(show: Boolean) {
             dialogController.value = true
         }
     }
-
 
     fun hide() {
         if (dialogController.value) {
@@ -51,19 +52,20 @@ class WindowDialog(show: Boolean) {
 }
 
 @Composable
-fun WindowDialog.Companion.defaultController(show: Boolean = false): WindowDialog = remember { WindowDialog(show) }
+fun WindowDialogController.Companion.defaultController(show: Boolean = false): WindowDialogController =
+    remember { WindowDialogController(show) }
 
 @Composable
-fun WindowMessageDialog(
-    controller: WindowDialog = WindowDialog.defaultController(),
-    radius: Dp = 12.dp,
-    backgroundColor: Color = Color(0xffF8F8FF),
+fun MessageWindowDialog(
+    controller: WindowDialogController = WindowDialogController.defaultController(),
     title: String,
     message: String,
+    radius: Dp = 12.dp,
+    backgroundColor: Color = Color(0xffF8F8FF),
     cancelText: String = "取消",
     confirmText: String = "确定",
-    onCancel: (WindowDialog) -> Unit,
-    onConfirm: (WindowDialog) -> Unit,
+    onCancel: (WindowDialogController) -> Unit,
+    onConfirm: (WindowDialogController) -> Unit,
 ) {
     WindowDialogContainer(controller = controller) {
         Card(
@@ -119,7 +121,7 @@ fun WindowMessageDialog(
 
 @Composable
 fun WindowDialogContainer(
-    controller: WindowDialog = WindowDialog.defaultController(),
+    controller: WindowDialogController = WindowDialogController.defaultController(),
     content: @Composable () -> Unit,
 ) {
     if (controller.isShowing) {

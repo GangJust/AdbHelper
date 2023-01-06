@@ -9,19 +9,37 @@ import app.state.HomeState
 import app.view.HomeUI
 import base.mvvm.AbstractState
 import base.mvvm.StateManager
-import compose.Toast
+import compose.ComposeLoading
+import compose.ComposeToast
+import compose.WindowDialogController
 import kotlinx.coroutines.async
-import utils.ShellUtils
-import utils.formatAdbCommand
-import utils.regexFind
-import utils.right
+import utils.*
+import java.io.File
+import java.nio.charset.Charset
+import javax.swing.filechooser.FileSystemView
 
 class AppManagerState : AbstractState<AppManagerLogic>() {
     override fun createLogic() = AppManagerLogic()
+
     private val homeState = StateManager.findState<HomeState>(HomeUI::class.java)
     private val device = homeState?.currentDevice?.value ?: ""
 
     val currentTabIndex = mutableStateOf(0)
+
+    private val allAppLazyListState = LazyListState()
+    private val systemAppLazyListState = LazyListState()
+    private val userAppLazyListState = LazyListState()
+    private val filterAppLazyListState = LazyListState()
+
+    val allAppList = mutableStateListOf<AppDescModel>()
+    val systemAppList = mutableStateListOf<AppDescModel>()
+    val userAppList = mutableStateListOf<AppDescModel>()
+    val filterAppList = mutableStateListOf<AppDescModel>()
+
+    var filterKeyWords = mutableStateOf("")
+    var loadingFinished = false
+    var showApkInstallDialog = mutableStateOf(false)
+
     val currentAppList: MutableList<AppDescModel>
         get() = when (currentTabIndex.value) {
             0 -> {
@@ -32,8 +50,12 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
                 systemAppList
             }
 
-            else -> {
+            2 -> {
                 userAppList
+            }
+
+            else -> {
+                filterAppList
             }
         }
     val currentLazyListState: LazyListState
@@ -46,22 +68,14 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
                 systemAppLazyListState
             }
 
-            else -> {
+            2 -> {
                 userAppLazyListState
             }
+
+            else -> {
+                filterAppLazyListState
+            }
         }
-
-    val allAppLazyListState = LazyListState()
-    val systemAppLazyListState = LazyListState()
-    val userAppLazyListState = LazyListState()
-
-    val allAppList = mutableStateListOf<AppDescModel>()
-    val systemAppList = mutableStateListOf<AppDescModel>()
-    val userAppList = mutableStateListOf<AppDescModel>()
-
-    var loadingFinished = false
-
-    var showApkInstallWindow = mutableStateOf(false)
 
     init {
         loadAppList()
@@ -97,12 +111,26 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
         }
     }
 
+    ///获取某App文件大小
+    private suspend fun getAppLength(installedPath: String): String {
+        val command = "adb shell stat -c '%s' $installedPath".formatAdbCommand(device)
+
+        var appLength = ""
+        ShellUtils.shell(command) { success, error ->
+            if (error.isNotEmpty()) return@shell
+            appLength = success.trim()
+        }
+
+        return appLength
+    }
+
     ///构建App详情实体
     private suspend fun buildAppDesc(packageName: String, isSystemApp: Boolean): AppDescModel {
         val appDesc = AppDescModel()
         appDesc.packageName = packageName
         appDesc.isSystemApp = isSystemApp
         appDesc.installedPath = getAppInstallPath(packageName)
+        appDesc.length = getAppLength(appDesc.installedPath).toIntOrNull() ?: 0
         getAppBasicDesc(packageName, appDesc)
 
         return appDesc
@@ -176,7 +204,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
     ///重新App列表(包名增量)
     fun reloadAppList() {
         if (!loadingFinished) {
-            Toast.show("请等待加载完成!")
+            ComposeToast.show("请等待加载完成!")
             return
         }
 
@@ -251,17 +279,18 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
             }
 
             if (increaseCount > 0 && reduceCount > 0) {
-                Toast.show("新增${increaseCount}个应用, 减少${reduceCount}个应用!")
+                ComposeToast.show("新增${increaseCount}个应用, 减少${reduceCount}个应用!")
             } else if (increaseCount > 0) {
-                Toast.show("新增${increaseCount}个应用!")
+                ComposeToast.show("新增${increaseCount}个应用!")
             } else if (reduceCount > 0) {
-                Toast.show("减少${reduceCount}个应用!")
+                ComposeToast.show("减少${reduceCount}个应用!")
             } else {
-                Toast.show("未发现新安装应用!")
+                ComposeToast.show("未发现新安装应用!")
             }
         }
     }
 
+    ///安装Apk
     fun installApk(path: String, resultMsg: (String) -> Unit) {
         val command = "adb install -r $path".formatAdbCommand(device)
 
@@ -275,6 +304,50 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
                 }
                 if (success.contains("Success")) {
                     resultMsg.invoke("安装成功!")
+                }
+            }
+        }
+    }
+
+    ///导出Apk
+    fun exportNotes(appDesc: AppDescModel) {
+        launch {
+            ComposeLoading.show("正在导出, 请稍后..")
+
+            val desktop = FileSystemView.getFileSystemView().homeDirectory
+            val exportApkName = File(desktop, appDesc.packageName.plus(".apk"))
+            val command = "adb pull ${appDesc.installedPath} ${exportApkName.absolutePath}".formatAdbCommand(device)
+            ShellUtils.shell(command) { success, error ->
+                if (error.isNotBlank()) {
+                    ComposeToast.show("导出失败!")
+                    return@shell
+                }
+
+                val speed = success.regexFind(Regex("skipped\\.\\s(.*?)/s"), -1)
+                val time = success.regexFind(Regex("in (.*?)s"), -1)
+                ComposeToast.show("导出成功! 速度:${speed}/s, 耗时:${time}s")
+            }
+
+            ComposeLoading.hide()
+        }
+    }
+
+    ///卸载App
+    fun uninstallApp(appDesc: AppDescModel) {
+        if (appDesc.isSystemApp) return
+
+        launch {
+            val command = "adb uninstall ${appDesc.packageName}".formatAdbCommand(device)
+            ShellUtils.shell(command) { success, error ->
+                if (error.isNotBlank()) {
+                    ComposeToast.show("卸载失败!")
+                    return@shell
+                }
+
+                if (success.contains("Success")) {
+                    allAppList.remove(appDesc)
+                    userAppList.remove(appDesc)
+                    ComposeToast.show("卸载成功!")
                 }
             }
         }

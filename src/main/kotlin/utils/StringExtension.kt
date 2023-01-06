@@ -1,6 +1,7 @@
 package utils
 
 import java.lang.IndexOutOfBoundsException
+import java.nio.charset.Charset
 
 /// 获取某个字符串中间的文本, 失败返回空字符串
 fun String.middle(start: String, end: String, reverse: Boolean = false): String {
@@ -40,4 +41,8 @@ fun String.regexFind(regex: Regex, index: Int): String {
 fun String.regexFind(regex: Regex): Array<String> {
     val find = regex.find(this) ?: return emptyArray()
     return find.groupValues.toTypedArray()
+}
+
+fun String.asCharset(charset: Charset): String {
+    return String(this.toByteArray(), charset)
 }

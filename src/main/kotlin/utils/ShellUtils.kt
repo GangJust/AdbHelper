@@ -34,8 +34,8 @@ object ShellUtils {
             Runtime.getRuntime().exec(commands)
         }
 
-        val successText = process.inputReader().use { it.readText() }
-        val errorText = process.errorReader().use { it.readText() }
+        val successText = process.inputReader(Charsets.UTF_8).use { it.readText() }
+        val errorText = process.errorReader(Charsets.UTF_8).use { it.readText() }
         process.destroy()
         block.invoke(successText, errorText)
     }

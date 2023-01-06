@@ -8,12 +8,10 @@ interface IState {
 }
 
 abstract class AbstractState<M : ILogic> : IState {
-    val model = createLogic()
+    val logic = createLogic()
 
     //subclasses `createModel()` for data processing
     abstract fun createLogic(): M
 
-    fun launch(block: suspend CoroutineScope.() -> Unit) {
-        GlobalScope.launch(block = block)
-    }
+    fun launch(block: suspend CoroutineScope.() -> Unit) = GlobalScope.launch(block = block)
 }
