@@ -1,6 +1,6 @@
 package app.model
 
-data class AppDescModel(
+data class AppDesc(
     var packageName: String = "unknown",
     var versionName: String = "unknown",
     var versionCode: String = "unknown",

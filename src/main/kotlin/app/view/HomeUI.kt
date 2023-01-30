@@ -6,11 +6,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -18,17 +21,17 @@ import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.WindowScope
 import androidx.compose.ui.window.WindowState
 import app.state.HomeState
-import app.view.pages.ActivityPage
-import app.view.pages.AppManagerPage
-import app.view.pages.PortForwardPage
-import app.view.pages.UnknownPage
+import app.view.pages.*
 import base.mvvm.AbstractView
 import base.mvvm.StateManager
 import base.mvvm.ViewCompose
+import compose.CardButton
+import compose.ComposeDialog
 import kotlinx.coroutines.*
 import res.ColorRes
 import res.IconRes
 import res.TextStyleRes
+import java.lang.RuntimeException
 
 class HomeUI(
     private val application: ApplicationScope,
@@ -39,9 +42,6 @@ class HomeUI(
 
     @Composable
     override fun viewCompose() {
-        //初始化
-        LaunchedEffect("initDevices") { state.loadDevices() }
-
         Row(modifier = Modifier.fillMaxSize()) {
             LeftContent()
             RightContent()
@@ -133,64 +133,43 @@ class HomeUI(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            state.launch {
-                                withContext(Dispatchers.IO) { state.loadDevices() }
-                                state.showDropdownMenu.value = true
-                            }
-                        }
-                ) {
-                    //弹出设备菜单选项
-                    DropdownMenu(
-                        expanded = state.showDropdownMenu.value,
-                        onDismissRequest = {
-                            state.showDropdownMenu.value = false
+                            ComposeDialog
+                                .setView { DialogContent() }
+                                .show()
                         },
-                        modifier = Modifier.width(state.leftPaneWidth.value)
-                    ) {
-                        for (device in state.devicesList) {
-                            DropdownMenuItem(
-                                onClick = {
-                                    state.currentDevice.value = device
-                                    state.showDropdownMenu.value = false
-                                },
-                            ) {
-                                Icon(
-                                    IconRes.phone,
-                                    tint = ColorRes.text,
-                                    contentDescription = "Device",
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Text(
-                                    text = "$device (${state.phoneBrandMap[device] ?: "unknown"})",
-                                    style = TextStyleRes.bodyMedium,
-                                    softWrap = false,
-                                    modifier = Modifier.padding(4.dp)
-                                )
-                            }
+                    content = {
+                        if (state.devicesList.isEmpty()) {
+                            Text(
+                                text = "请选择ADB设备",
+                                style = TextStyleRes.bodyMedium,
+                                modifier = Modifier
+                                    .padding(vertical = 16.dp, horizontal = 12.dp)
+                                    .align(Alignment.Center),
+                            )
+                        } else {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .padding(vertical = 16.dp, horizontal = 12.dp)
+                                    .align(Alignment.Center),
+                                content = {
+                                    Icon(
+                                        painterResource("icon/ic_phone.svg"),
+                                        tint = ColorRes.icon,
+                                        contentDescription = "Device",
+                                        modifier = Modifier.padding(horizontal = 8.dp).size(18.dp)
+                                    )
+                                    Text(
+                                        text = "${state.currentDevice.value}\n(${state.phoneApiMap[state.currentDevice.value]})",
+                                        style = TextStyleRes.bodyMedium,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            )
                         }
                     }
-
-                    //当前设备
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(vertical = 16.dp, horizontal = 12.dp)
-                            .align(Alignment.Center)
-                    ) {
-                        Icon(
-                            painterResource("icon/ic_phone.svg"),
-                            tint = ColorRes.text,
-                            contentDescription = "Device",
-                            modifier = Modifier.padding(horizontal = 8.dp).size(18.dp)
-                        )
-                        Text(
-                            text = "${state.currentDevice.value} (${state.phoneBrandMap[state.currentDevice.value] ?: "unknown"})",
-                            style = TextStyleRes.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
+                )
             }
         }
     }
@@ -198,60 +177,118 @@ class HomeUI(
     /// 右侧
     @Composable
     private fun RightContent() {
-        Column {
-            //顶部操作条
-            windowScope.WindowDraggableArea {
-                BoxWithConstraints {
-                    Row(
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        IconButton(
-                            onClick = {
-                                windowState.isMinimized = true
-                            }
-                        ) {
-                            Icon(
-                                painter = IconRes.windowMinimized,
-                                contentDescription = "minimized",
-                                tint = ColorRes.text,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+        CustomScaffold(
+            application = application,
+            windowScope = windowScope,
+            windowState = windowState,
+            title = {},
+            content = {
+                //主要视图, 统一加载, 选择切换
+                val activityHistoryPage = ActivityPage()
+                val appManagerPage = AppManagerPage()
+                val portForwardPage = PortForwardPage()
+                val viewLayoutPage = ViewLayoutPage()
+                val unknownPage = UnknownPage()
 
-                        IconButton(
-                            onClick = {
-                                StateManager.clearStateMaps()
-                                application.exitApplication()
-                            }
-                        ) {
-                            Icon(
-                                painter = IconRes.windowClosed,
-                                contentDescription = "closed",
-                                tint = ColorRes.text,
-                                modifier = Modifier.size(18.dp)
-                            )
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    ViewCompose {
+                        when (state.leftMenuSelectIndex.value) {
+                            0 -> activityHistoryPage
+                            1 -> appManagerPage
+                            2 -> portForwardPage
+                            3 -> viewLayoutPage
+                            else -> unknownPage
                         }
                     }
                 }
             }
+        )
+    }
 
-            //主要内容
-            val activityHistoryPage = ActivityPage()
-            val appManagerPage = AppManagerPage()
-            val portForwardPage = PortForwardPage()
-            val unknownPage = UnknownPage(message = "哎呀, 正在码不停蹄中..")
 
-            BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-                ViewCompose {
-                    when (state.leftMenuSelectIndex.value) {
-                        0 -> activityHistoryPage
-                        1 -> appManagerPage
-                        2 -> portForwardPage
-                        else -> unknownPage
+    @Composable
+    private fun BoxWithConstraintsScope.DialogContent() {
+        Card(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .width(360.dp)
+                .padding(horizontal = 24.dp, vertical = 12.dp),
+            shape = RoundedCornerShape(8.dp),
+            content = {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "在线设备",
+                            style = TextStyleRes.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(
+                            onClick = { state.loadDevices() },
+                            content = {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "refresh",
+                                    tint = ColorRes.icon,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                        IconButton(
+                            onClick = { ComposeDialog.hide() },
+                            content = {
+                                Icon(
+                                    painter = IconRes.windowClosed,
+                                    contentDescription = "closed",
+                                    tint = ColorRes.icon,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                    }
+
+                    if (state.devicesList.isEmpty()) {
+                        Text(
+                            text = "没有ADB设备",
+                            style = TextStyleRes.bodyMedium,
+                            modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                        )
+                    }
+
+                    LazyColumn {
+                        items(state.devicesList.size) {
+                            val device = state.devicesList[it]
+                            CardButton(
+                                shape = RoundedCornerShape(0.dp),
+                                onClick = {
+                                    state.currentDevice.value = device
+                                    ComposeDialog.hide()
+                                },
+                                content = {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        content = {
+                                            Icon(
+                                                painter = IconRes.phone,
+                                                tint = ColorRes.icon,
+                                                contentDescription = "Device",
+                                                modifier = Modifier.padding(horizontal = 8.dp).size(18.dp)
+                                            )
+                                            Text(
+                                                text = "$device (${state.phoneApiMap[state.currentDevice.value]})",
+                                                style = TextStyleRes.bodyMedium,
+                                                softWrap = false,
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
-            }
-        }
+            },
+        )
     }
 }

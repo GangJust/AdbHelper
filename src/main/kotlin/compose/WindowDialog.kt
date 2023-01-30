@@ -22,6 +22,8 @@ import androidx.compose.ui.window.DialogState
 import res.ColorRes
 import res.TextStyleRes
 
+/// 该类是将默认的dialog弹层(Window窗口)封装, 组件方式参见: ComposeDialog.kt
+
 /// Dialog控制器
 class WindowDialogController(show: Boolean) {
     private val _dialogState = DialogState()
@@ -96,23 +98,25 @@ fun MessageWindowDialog(
                     CardButton(
                         onClick = { onCancel.invoke(controller) },
                         shape = RoundedCornerShape(bottomStart = radius),
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(
-                            text = cancelText,
-                            style = TextStyleRes.bodyMedium,
-                        )
-                    }
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        content = {
+                            Text(
+                                text = cancelText,
+                                style = TextStyleRes.bodyMedium,
+                            )
+                        }
+                    )
                     CardButton(
                         onClick = { onConfirm.invoke(controller) },
                         shape = RoundedCornerShape(bottomEnd = radius),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = confirmText,
-                            style = TextStyleRes.bodyMediumSurface,
-                        )
-                    }
+                        modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                        content = {
+                            Text(
+                                text = confirmText,
+                                style = TextStyleRes.bodyMediumSurface,
+                            )
+                        }
+                    )
                 }
             }
         }
@@ -131,10 +135,7 @@ fun WindowDialogContainer(
             undecorated = true,
             transparent = true,
             resizable = false,
-        ) {
-            this.WindowDraggableArea {
-                content()
-            }
-        }
+            content = { this.WindowDraggableArea { content() } }
+        )
     }
 }

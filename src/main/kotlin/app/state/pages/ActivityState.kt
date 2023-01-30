@@ -12,7 +12,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import utils.ShellUtils
 import utils.formatAdbCommand
-import utils.middle
+import extensions.middle
 import java.util.Calendar
 
 class ActivityState : AbstractState<ActivityLogic>() {

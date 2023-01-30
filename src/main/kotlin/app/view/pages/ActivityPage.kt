@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.comm.BaseScaffold
 import app.state.pages.ActivityState
 import base.mvvm.AbstractView
 import res.ColorRes
@@ -24,17 +25,12 @@ class ActivityPage : AbstractView<ActivityState>() {
 
     @Composable
     override fun viewCompose() {
-        Scaffold(
-            backgroundColor = ColorRes.transparent,
-            contentColor = ColorRes.transparent,
-            isFloatingActionButtonDocked = true,
+        BaseScaffold(
             floatingActionButton = {
                 FloatingActionButton(
                     contentColor = Color.White,
                     backgroundColor = ColorRes.primary,
-                    onClick = {
-                        state.loadActivity()
-                    },
+                    onClick = { state.loadActivity() },
                     content = {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -72,33 +68,33 @@ class ActivityPage : AbstractView<ActivityState>() {
             Column(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
                 SingleHistoryItem(
                     title = "当前包名:",
-                    singleLine = state.singleTextLine.value,
                     value = state.packageName.value,
+                    singleLine = state.singleTextLine.value,
                 )
                 SingleHistoryItem(
                     title = "当前进程:",
-                    singleLine = state.singleTextLine.value,
                     value = state.processName.value,
+                    singleLine = state.singleTextLine.value,
                 )
                 SingleHistoryItem(
                     title = "启动活动:",
-                    singleLine = state.singleTextLine.value,
                     value = state.launchActivity.value,
+                    singleLine = state.singleTextLine.value,
                 )
                 SingleHistoryItem(
                     title = "前台活动:",
-                    singleLine = state.singleTextLine.value,
                     value = state.resumedActivity.value,
+                    singleLine = state.singleTextLine.value,
                 )
                 SingleHistoryItem(
                     title = "上次活动:",
-                    singleLine = state.singleTextLine.value,
                     value = state.lastPausedActivity.value,
+                    singleLine = state.singleTextLine.value,
                 )
                 MultipleHistoryItem(
                     title = "活动堆栈:",
-                    singleLine = state.singleTextLine.value,
                     values = state.stackActivities.toTypedArray().reversedArray(),
+                    singleLine = state.singleTextLine.value,
                 )
             }
         }
@@ -137,8 +133,8 @@ class ActivityPage : AbstractView<ActivityState>() {
     @Composable
     private fun SingleHistoryItem(
         title: String,
-        singleLine: Boolean = false,
         value: String,
+        singleLine: Boolean = false,
     ) {
         Card(
             elevation = 2.dp,

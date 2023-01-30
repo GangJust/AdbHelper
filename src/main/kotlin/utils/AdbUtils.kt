@@ -2,10 +2,17 @@ package utils
 
 object AdbUtils {
     fun formatCommand(adbCommand: String, device: String): String {
+        var adb = adbCommand
+
         if (device.isNotBlank()) {
-            return adbCommand.replace("adb", "adb -s $device")
+            adb = adbCommand.replace("adb", "adb -s $device")
         }
-        return adbCommand
+
+        // if windows os
+        if (System.getProperty("os.name").contains("Windows")) {
+            adb = adb.replace("adb", "cmd /c adb").replace("grep", "findstr")
+        }
+        return adb
     }
 }
 

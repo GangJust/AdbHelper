@@ -4,18 +4,19 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import app.logic.pages.AppManagerLogic
-import app.model.AppDescModel
+import app.model.AppDesc
 import app.state.HomeState
 import app.view.HomeUI
 import base.mvvm.AbstractState
 import base.mvvm.StateManager
 import compose.ComposeLoading
+import compose.ComposeOverlay
 import compose.ComposeToast
-import compose.WindowDialogController
+import extensions.regexFind
+import extensions.right
 import kotlinx.coroutines.async
 import utils.*
 import java.io.File
-import java.nio.charset.Charset
 import javax.swing.filechooser.FileSystemView
 
 class AppManagerState : AbstractState<AppManagerLogic>() {
@@ -31,16 +32,19 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
     private val userAppLazyListState = LazyListState()
     private val filterAppLazyListState = LazyListState()
 
-    val allAppList = mutableStateListOf<AppDescModel>()
-    val systemAppList = mutableStateListOf<AppDescModel>()
-    val userAppList = mutableStateListOf<AppDescModel>()
-    val filterAppList = mutableStateListOf<AppDescModel>()
-
-    var filterKeyWords = mutableStateOf("")
     var loadingFinished = false
-    var showApkInstallDialog = mutableStateOf(false)
+    val allAppList = mutableStateListOf<AppDesc>()
+    val systemAppList = mutableStateListOf<AppDesc>()
+    val userAppList = mutableStateListOf<AppDesc>()
+    val filterAppList = mutableStateListOf<AppDesc>()
 
-    val currentAppList: MutableList<AppDescModel>
+    val filterOverlayController = ComposeOverlay()
+    val filterKeyWords = mutableStateOf("")
+
+    val showApkInstallDialog = mutableStateOf(false)
+    val apkInstallMessage = mutableStateOf("")
+
+    val currentAppList: MutableList<AppDesc>
         get() = when (currentTabIndex.value) {
             0 -> {
                 allAppList
@@ -95,7 +99,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
     }
 
     ///通过包名获取App基本信息
-    private suspend fun getAppBasicDesc(packageName: String, appDesc: AppDescModel) {
+    private suspend fun getAppBasicDesc(packageName: String, appDesc: AppDesc) {
         val command = "adb shell dumpsys package $packageName".formatAdbCommand(device)
 
         ShellUtils.shell(command) { success, error ->
@@ -125,8 +129,8 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
     }
 
     ///构建App详情实体
-    private suspend fun buildAppDesc(packageName: String, isSystemApp: Boolean): AppDescModel {
-        val appDesc = AppDescModel()
+    private suspend fun buildAppDesc(packageName: String, isSystemApp: Boolean): AppDesc {
+        val appDesc = AppDesc()
         appDesc.packageName = packageName
         appDesc.isSystemApp = isSystemApp
         appDesc.installedPath = getAppInstallPath(packageName)
@@ -258,7 +262,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
             val packageNames = loadPackageNames(0)
             if (packageNames.size < allAppList.size) {
                 val appIterator = allAppList.iterator()
-                val nonExistentApp = mutableListOf<AppDescModel>()
+                val nonExistentApp = mutableListOf<AppDesc>()
                 while (appIterator.hasNext()) {
                     val appDesc = appIterator.next()
                     if (!packageNames.contains(appDesc.packageName)) {
@@ -290,27 +294,36 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
         }
     }
 
+    ///搜索应用
+    fun filterApp(keywords: String) {
+        filterAppList.clear()
+
+        allAppList.forEach {
+            if (it.packageName.contains(keywords)) {
+                filterAppList.add(it)
+            }
+        }
+    }
+
     ///安装Apk
-    fun installApk(path: String, resultMsg: (String) -> Unit) {
+    fun installApk(path: String) {
         val command = "adb install -r $path".formatAdbCommand(device)
-
-        resultMsg.invoke("正在安装, 请注意设备安装弹窗..")
-
+        apkInstallMessage.value = "正在安装, 请注意设备安装弹窗.."
         launch {
             ShellUtils.shell(command) { success, error ->
                 if (error.isNotEmpty()) {
-                    resultMsg.invoke("安装失败!\n\n$error")
+                    apkInstallMessage.value = "安装失败!\n$error"
                     return@shell
                 }
                 if (success.contains("Success")) {
-                    resultMsg.invoke("安装成功!")
+                    apkInstallMessage.value = "安装成功!"
                 }
             }
         }
     }
 
     ///导出Apk
-    fun exportNotes(appDesc: AppDescModel) {
+    fun exportNotes(appDesc: AppDesc) {
         launch {
             ComposeLoading.show("正在导出, 请稍后..")
 
@@ -333,7 +346,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
     }
 
     ///卸载App
-    fun uninstallApp(appDesc: AppDescModel) {
+    fun uninstallApp(appDesc: AppDesc) {
         if (appDesc.isSystemApp) return
 
         launch {
@@ -347,6 +360,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
                 if (success.contains("Success")) {
                     allAppList.remove(appDesc)
                     userAppList.remove(appDesc)
+                    filterAppList.remove(appDesc)
                     ComposeToast.show("卸载成功!")
                 }
             }

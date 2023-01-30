@@ -3,9 +3,13 @@ package utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStreamReader
 
 object ShellUtils {
+
+    //工作目录, 即是在某个目录下进行命令执行
+    var workDirectory: File? = null
 
     suspend fun shell(command: String): String {
         val command = command.split(" ").toTypedArray()
@@ -15,7 +19,7 @@ object ShellUtils {
     suspend fun shell(vararg commands: String): String {
         if (commands.isEmpty()) return ""
         val process = withContext(Dispatchers.IO) {
-            Runtime.getRuntime().exec(commands)
+            Runtime.getRuntime().exec(commands, null, workDirectory)
         }
         val readText = process.inputReader().use { it.readText() }
         process.destroy()
@@ -31,7 +35,7 @@ object ShellUtils {
         if (commands.isEmpty()) return
 
         val process = withContext(Dispatchers.IO) {
-            Runtime.getRuntime().exec(commands)
+            Runtime.getRuntime().exec(commands, null, workDirectory)
         }
 
         val successText = process.inputReader(Charsets.UTF_8).use { it.readText() }

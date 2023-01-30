@@ -25,18 +25,19 @@ fun TabItem(
         modifier = modifier
     ) {
         TextButton(
+            modifier = Modifier.widthIn(min = 80.dp),
             shape = RoundedCornerShape(8.dp),
             onClick = { onSelect.invoke(index) },
             colors = ButtonDefaults.textButtonColors(
                 contentColor = ColorRes.onSurface,
                 backgroundColor = if (selected) ColorRes.onSurface else ColorRes.transparent,
             ),
-            modifier = Modifier.widthIn(min = 80.dp)
-        ) {
-            Text(
-                text = title,
-                style = if (selected) TextStyleRes.bodyMediumSurface else TextStyleRes.bodyMedium,
-            )
-        }
+            content = {
+                Text(
+                    text = title,
+                    style = if (selected) TextStyleRes.bodyMediumSurface else TextStyleRes.bodyMedium,
+                )
+            }
+        )
     }
 }

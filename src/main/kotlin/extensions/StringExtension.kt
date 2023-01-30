@@ -1,4 +1,4 @@
-package utils
+package extensions
 
 import java.lang.IndexOutOfBoundsException
 import java.nio.charset.Charset
@@ -22,10 +22,10 @@ fun String.left(end: String): String {
     return this.substring(0, endIndex)
 }
 
-fun String.right(start: String): String {
+fun String.right(start: String, reverse: Boolean = false): String {
     if (this.isEmpty() || !this.contains(start)) return ""
 
-    val startIndex = this.indexOf(start) + start.length
+    val startIndex = (if (reverse) this.lastIndexOf(start) else this.indexOf(start)) + start.length
     return this.substring(startIndex)
 }
 
@@ -43,6 +43,6 @@ fun String.regexFind(regex: Regex): Array<String> {
     return find.groupValues.toTypedArray()
 }
 
-fun String.asCharset(charset: Charset): String {
+fun String.encodingTo(charset: Charset): String {
     return String(this.toByteArray(), charset)
 }

@@ -4,7 +4,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import app.logic.pages.PortForwardLogic
-import app.model.MessageModel
+import app.model.ChatMessage
 import app.state.HomeState
 import app.view.HomeUI
 import base.mvvm.AbstractState
@@ -18,21 +18,28 @@ class PortForwardState : AbstractState<PortForwardLogic>() {
     private val homeState = StateManager.findState<HomeState>(HomeUI::class.java)
     private val device = homeState?.currentDevice?.value ?: ""
 
-    val messageHint = mutableStateOf(true)
-    private val _messageValue = mutableStateOf("")
-
+    val messageValue = mutableStateOf("")
+    val chatMessageList = mutableStateListOf<ChatMessage>()
     val chatMessageLazyListState = LazyListState()
-    val chatMessageList = mutableStateListOf<MessageModel>()
 
     //用户发送消息
     fun sendMessage(message: String) {
         if (message.isEmpty()) return
 
-        chatMessageList.add(MessageModel(1, message, Date()))
-        messageValue = ""
+        chatMessageList.add(ChatMessage(1, message, Date()))
+        messageValue.value = ""
 
         if (message == "命令列表") { //命令列表
             replyMessage("命令列表\n端口转发: tcp:8080  tcp:8080\n取消转发: remove tcp:8080\n取消所有: remove all\n转发列表: forward list")
+        } else if (message.contains("adb|adb shell".toRegex())) {
+            launch {
+                ShellUtils.shell(message.formatAdbCommand(device)) { success, error ->
+                    replyMessage("以下是 `${message.trim()}` 成功内容: \n----\n${success.trim()}")
+                    if (error.isNotBlank()) {
+                        replyMessage("以下是 `${message.trim()}` 失败内容:\n----\n${error.trim()}")
+                    }
+                }
+            }
         } else if (message.contains(Regex("tcp:(\\d+)\\s+tcp:(\\d+)"))) { //转发端口
             val find = Regex("tcp:(\\d+)").find(message)!!
             val tcp1 = find.groupValues[1]
@@ -107,18 +114,13 @@ class PortForwardState : AbstractState<PortForwardLogic>() {
                         replyMessage(success.replace("$device ", "").trim())
                 }
             }
+        } else {
+            replyMessage("没有相关命令!")
         }
     }
 
     //系统回复消息
-    fun replyMessage(message: String) {
-        chatMessageList.add(MessageModel(0, message, Date()))
+    private fun replyMessage(message: String) {
+        chatMessageList.add(ChatMessage(0, message, Date()))
     }
-
-    var messageValue
-        set(value) {
-            _messageValue.value = value
-            messageHint.value = value.isEmpty()
-        }
-        get() = _messageValue.value
 }

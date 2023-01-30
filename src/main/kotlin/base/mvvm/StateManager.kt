@@ -1,5 +1,6 @@
 package base.mvvm
 
+//一个简单的管理类
 object StateManager {
     private val stateMaps = mutableMapOf<Class<*>, IState>()
 

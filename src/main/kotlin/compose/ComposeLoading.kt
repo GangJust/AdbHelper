@@ -17,65 +17,82 @@ import res.TextStyleRes
 
 
 /// Loading控制器
-class ComposeLoading {
-    private var controller = mutableStateOf(false)
-    private var loadingMessage = ""
+class ComposeLoading : ComposeController {
+    private var status = mutableStateOf(false)
+    private val messageText = mutableStateOf("请稍后..")
 
     companion object {
         private val instance = ComposeLoading()
 
         fun show(message: String) {
-            instance.loadingMessage = message
-            instance.controller.value = true
+            instance.show(message)
         }
 
         fun hide() {
-            instance.controller.value = false
+            instance.hide()
         }
 
         fun defaultLoadingController() = instance
     }
 
-    val isShowing
-        get() = controller.value
+    fun show(message: String) {
+        messageText.value = message
+        show()
+    }
 
-    val message
-        get() = loadingMessage
+    override fun show() {
+        if (!status.value) status.value = true
+    }
+
+    override fun hide() {
+        status.value = false
+    }
+
+    override val isShowing: Boolean
+        get() = status.value
+
+    val message: String
+        get() = messageText.value
 }
 
 @Composable
-fun LoadingContainer(
-    controller: ComposeLoading = ComposeLoading.defaultLoadingController(),
+fun ComposeLoadingContainer(
     windowScope: WindowScope,
+    modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
-    Box(contentAlignment = Alignment.Center) {
-        content()
+    val controller = ComposeLoading.defaultLoadingController()
 
-        if (controller.isShowing) {
-            windowScope.WindowDraggableArea {
-                Card(
-                    elevation = 0.dp,
-                    backgroundColor = Color.Black.copy(alpha = 0.6f),
-                    modifier = Modifier.fillMaxSize(),
-                    content = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier,
-                            content = {
-                                CircularProgressIndicator()
-                                Spacer(Modifier.padding(vertical = 6.dp))
-                                Text(
-                                    text = controller.message,
-                                    style = TextStyleRes.bodyMedium.copy(color = ColorRes.white)
-                                )
-                            }
-                        )
-                    }
-                )
+    Box(
+        modifier = modifier,
+        content = {
+            content()
+
+            if (controller.isShowing) {
+                windowScope.WindowDraggableArea {
+                    Card(
+                        elevation = 0.dp,
+                        backgroundColor = Color.Black.copy(alpha = 0.6f),
+                        modifier = Modifier.fillMaxSize(),
+                        content = {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier,
+                                content = {
+                                    CircularProgressIndicator()
+                                    Spacer(Modifier.padding(vertical = 6.dp))
+                                    Text(
+                                        text = controller.message,
+                                        style = TextStyleRes.bodyMedium.copy(color = ColorRes.white)
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
             }
         }
-    }
+    )
 }
 

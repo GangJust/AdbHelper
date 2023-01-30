@@ -2,25 +2,28 @@ package app.view.pages
 
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import app.model.MessageModel
+import app.comm.BaseScaffold
+import app.model.ChatMessage
 import app.state.pages.PortForwardState
 import base.mvvm.AbstractView
+import compose.CustomTextField
 import kotlinx.coroutines.delay
 import res.ColorRes
 import res.TextStyleRes
@@ -41,46 +44,35 @@ class PortForwardPage : AbstractView<PortForwardState>() {
         //滚动监听, 当 chatMessageList size 发生改变时, 会自动跳转到底部
         LaunchedEffect(state.chatMessageList.size) {
             if (state.chatMessageList.isEmpty()) return@LaunchedEffect
+
+            delay(200L) //延时200毫秒
             state.chatMessageLazyListState.animateScrollToItem(state.chatMessageList.size - 1)
         }
 
-        Scaffold(
-            backgroundColor = ColorRes.transparent,
-            contentColor = ColorRes.transparent,
-            isFloatingActionButtonDocked = true,
+        BaseScaffold(
             bottomBar = {
                 BottomAppBar(
                     backgroundColor = ColorRes.white,
                     contentColor = ColorRes.transparent,
-                    modifier = Modifier.padding(start = 1.dp),
+                    modifier = Modifier.padding(start = 1.dp), //预留出左侧阴影
                     content = {
-                        Box(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp).weight(1f),
-                            content = {
-                                BasicTextField(
-                                    value = state.messageValue,
-                                    onValueChange = {
-                                        state.messageValue = it
-                                    },
-                                    singleLine = true,
-                                    textStyle = TextStyleRes.bodyMedium,
-                                    modifier = Modifier.fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                        .onPreviewKeyEvent {
-                                            if (it.key == Key.Enter) {
-                                                return@onPreviewKeyEvent onSenderMessage()
-                                            }
-                                            false
-                                        },
-                                )
-                                if (state.messageHint.value) {
-                                    Text(
-                                        text = "请输入被转发的端口",
-                                        style = TextStyleRes.bodyMedium.copy(color = ColorRes.secondaryText),
-                                        modifier = Modifier.align(Alignment.CenterStart)
-                                    )
-                                }
-                            }
+                        CustomTextField(
+                            value = state.messageValue,
+                            hintText = "请输入被转发的端口(支持完整的adb命令)",
+                            textStyle = TextStyleRes.bodyMedium,
+                            onValueChange = {
+                                state.messageValue.value = it
+                            },
+                            modifier = Modifier
+                                .focusable(true)
+                                .weight(1f)
+                                .padding(horizontal = 24.dp)
+                                .onPreviewKeyEvent {
+                                    if (it.key == Key.Enter) {
+                                        return@onPreviewKeyEvent onSenderMessage()
+                                    }
+                                    false
+                                },
                         )
                         Button(
                             modifier = Modifier.padding(horizontal = 12.dp),
@@ -130,7 +122,7 @@ class PortForwardPage : AbstractView<PortForwardState>() {
     }
 
     @Composable
-    private fun ChatMessageItem(model: MessageModel) {
+    private fun ChatMessageItem(model: ChatMessage) {
         val radius = 12.dp
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -151,15 +143,15 @@ class PortForwardPage : AbstractView<PortForwardState>() {
                 ),
                 elevation = 1.dp,
                 backgroundColor = if (model.msgType == 0) ColorRes.messageSystem else ColorRes.messageUser,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
                 content = {
-                    SelectionContainer(modifier = Modifier) {
-                        Text(
-                            text = model.message,
-                            style = TextStyleRes.bodyMedium.copy(lineHeight = 1.5.em),
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                        )
-                    }
+                    BasicTextField(
+                        readOnly = true,
+                        value = model.message,
+                        onValueChange = { /*禁止修改*/ },
+                        textStyle = TextStyleRes.bodyMedium.copy(lineHeight = 1.8.em),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
                 }
             )
 
@@ -171,7 +163,7 @@ class PortForwardPage : AbstractView<PortForwardState>() {
     }
 
     private fun onSenderMessage(): Boolean {
-        state.sendMessage(state.messageValue)
+        state.sendMessage(state.messageValue.value)
         return true
     }
 }

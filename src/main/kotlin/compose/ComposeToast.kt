@@ -14,26 +14,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.WindowScope
 import kotlinx.coroutines.*
 import res.ColorRes
 import res.TextStyleRes
 
 //Toast控制器
-class ComposeToast {
+class ComposeToast private constructor() {
     private val toastText = mutableStateOf("")
-    private val toastController = mutableStateOf(false)
+    private val toastStatus = mutableStateOf(false)
     private var job: Job? = null
 
     companion object {
         private val instance = ComposeToast()
 
-        fun show(text: String, duration: Long = 2000) {
+        fun show(text: String, duration: Long = 2000L, callback: () -> Unit = {}) {
             instance.toastText.value = text
             if (!instance.isShowing) {
+                cancel()
                 instance.job = GlobalScope.launch {
-                    instance.toastController.value = true
+                    instance.toastStatus.value = true
                     delay(duration)
-                    instance.toastController.value = false
+                    instance.toastStatus.value = false
+                    callback.invoke()
                 }
             }
         }
@@ -48,7 +51,7 @@ class ComposeToast {
     }
 
     val isShowing
-        get() = toastController.value
+        get() = toastStatus.value && job?.isActive ?: false
 
     val text
         get() = toastText.value
@@ -56,37 +59,41 @@ class ComposeToast {
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable //Toast视图容器
-fun ToastContainer(
-    state: ComposeToast = ComposeToast.defaultToastController(),
+fun ComposeToastContainer(
     contentAlignment: Alignment = Alignment.BottomCenter,
     content: @Composable () -> Unit,
 ) {
+    val controller = ComposeToast.defaultToastController()
+
     Box {
         content()
 
         BoxWithConstraints(
             contentAlignment = contentAlignment,
             modifier = Modifier.fillMaxSize(),
-        ) {
-            AnimatedVisibility(
-                visible = state.isShowing,
-                enter = scaleIn(),
-                exit = scaleOut(),
-            ) {
-                Card(
-                    elevation = 8.dp,
-                    shape = RoundedCornerShape(16.dp),
-                    backgroundColor = ColorRes.icon,
-                    modifier = Modifier.padding(vertical = 32.dp),
-                ) {
-                    Text(
-                        text = state.text,
-                        style = TextStyleRes.bodyMedium.copy(color = Color.White),
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                    )
-                }
+            content = {
+                AnimatedVisibility(
+                    visible = controller.isShowing,
+                    enter = scaleIn(),
+                    exit = scaleOut(),
+                    content = {
+                        Card(
+                            elevation = 8.dp,
+                            shape = RoundedCornerShape(16.dp),
+                            backgroundColor = ColorRes.icon,
+                            modifier = Modifier.padding(vertical = 32.dp),
+                            content = {
+                                Text(
+                                    text = controller.text,
+                                    style = TextStyleRes.bodyMedium.copy(color = Color.White),
+                                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                                )
+                            }
+                        )
+                    }
+                )
             }
-        }
+        )
 
     }
 }
