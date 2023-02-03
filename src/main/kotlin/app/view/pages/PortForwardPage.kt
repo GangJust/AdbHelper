@@ -57,12 +57,6 @@ class PortForwardPage : AbstractView<PortForwardState>() {
                     modifier = Modifier.padding(start = 1.dp), //预留出左侧阴影
                     content = {
                         CustomTextField(
-                            value = state.messageValue,
-                            hintText = "请输入被转发的端口(支持完整的adb命令)",
-                            textStyle = TextStyleRes.bodyMedium,
-                            onValueChange = {
-                                state.messageValue.value = it
-                            },
                             modifier = Modifier
                                 .focusable(true)
                                 .weight(1f)
@@ -73,6 +67,11 @@ class PortForwardPage : AbstractView<PortForwardState>() {
                                     }
                                     false
                                 },
+                            value = state.messageValue,
+                            onValueChange = { state.messageValue.value = it },
+                            hintText = "请输入被转发的端口(支持完整的adb命令)",
+                            fillMaxWidth = true,
+                            textStyle = TextStyleRes.bodyMedium,
                         )
                         Button(
                             modifier = Modifier.padding(horizontal = 12.dp),

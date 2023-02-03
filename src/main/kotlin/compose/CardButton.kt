@@ -44,7 +44,7 @@ fun CardButton(
 fun CardButton(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(8.dp),
-    contentPadding: PaddingValues = PaddingValues(8.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
     onClick: () -> Unit,
     content: @Composable () -> Unit,
 ) {

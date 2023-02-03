@@ -307,7 +307,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
 
     ///安装Apk
     fun installApk(path: String) {
-        val command = "adb install -r $path".formatAdbCommand(device)
+        val command = "adb install -r \"$path\"".formatAdbCommand(device)
         apkInstallMessage.value = "正在安装, 请注意设备安装弹窗.."
         launch {
             ShellUtils.shell(command) { success, error ->

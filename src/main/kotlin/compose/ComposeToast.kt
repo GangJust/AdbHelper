@@ -80,7 +80,7 @@ fun ComposeToastContainer(
                         Card(
                             elevation = 8.dp,
                             shape = RoundedCornerShape(16.dp),
-                            backgroundColor = ColorRes.icon,
+                            backgroundColor = ColorRes.black,
                             modifier = Modifier.padding(vertical = 32.dp),
                             content = {
                                 Text(

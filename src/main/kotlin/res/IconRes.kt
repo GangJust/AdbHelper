@@ -10,6 +10,7 @@ object IconRes {
     val windowClosed = readIconPainter("icon/ic_window_closed.svg")
     val phone = readIconPainter("icon/ic_phone.svg")
     val check = readIconPainter("icon/ic_check.svg")
+    val wifi = readIconPainter("icon/ic_wifi.svg")
     val browseActivity = readIconPainter("icon/ic_browse_activity.svg")
     val apkDocument = readIconPainter("icon/ic_apk_document.svg")
     val apkInstall = readIconPainter("icon/ic_apk_install.svg")

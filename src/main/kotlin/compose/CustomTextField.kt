@@ -2,6 +2,8 @@ package compose
 
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Text
@@ -21,6 +23,7 @@ fun CustomTextField(
     hintText: String = "",
     singleLine: Boolean = true,
     enabled: Boolean = true,
+    fillMaxWidth: Boolean = false,
     textStyle: TextStyle = TextStyleRes.bodyMedium,
     modifier: Modifier = Modifier,
 ) {
@@ -34,7 +37,7 @@ fun CustomTextField(
                 singleLine = singleLine,
                 enabled = enabled,
                 textStyle = textStyle,
-                modifier = Modifier.padding(vertical = 4.dp),
+                modifier = Modifier.padding(vertical = 4.dp).then(if (fillMaxWidth) Modifier.fillMaxWidth() else Modifier),
             )
 
             if (value.value.isEmpty()) {

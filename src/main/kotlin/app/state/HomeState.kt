@@ -7,11 +7,9 @@ import androidx.compose.ui.unit.dp
 import app.logic.HomeLogic
 import base.mvvm.AbstractState
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
 import res.IconRes
 import utils.ShellUtils
 import utils.formatAdbCommand
-import java.lang.RuntimeException
 
 class HomeState : AbstractState<HomeLogic>() {
     override fun createLogic(): HomeLogic = HomeLogic()
@@ -25,7 +23,10 @@ class HomeState : AbstractState<HomeLogic>() {
 
     val currentDevice = mutableStateOf("")
     val devicesList = mutableStateListOf<String>()
-    val phoneApiMap = mutableStateMapOf<String, String>()
+    val phoneAbiMap = mutableStateMapOf<String, String>()
+    val phoneBrandMap = mutableStateMapOf<String, String>()
+
+    val showConnectWifiDeviceView = mutableStateOf(false)
 
     init {
         loadDevices()
@@ -56,11 +57,12 @@ class HomeState : AbstractState<HomeLogic>() {
                     val device = element.replace("device", "").trim()
                     devicesList.add(device)
                     //获取Abi系统架构
-                    phoneApiMap[device] = getAbi(device)
+                    phoneAbiMap[device] = getAbi(device)
+                    phoneBrandMap[device] = getBrand(device)
                 }
             }
 
-            if(currentDevice.value.isEmpty()){
+            if (currentDevice.value.isEmpty()) {
                 currentDevice.value = devicesList[0]
             }
         }
@@ -71,6 +73,28 @@ class HomeState : AbstractState<HomeLogic>() {
         val command = "adb shell getprop ro.product.cpu.abi".formatAdbCommand(device)
         val abi = ShellUtils.shell(command)
         if (abi.isEmpty()) return "unknown"
-        return abi
+        return abi.trim()
+    }
+
+    /// 获取某个ADB设备的系统品牌
+    private suspend fun getBrand(device: String): String {
+        val command = "adb shell getprop ro.product.brand".formatAdbCommand(device)
+        val brand = ShellUtils.shell(command)
+        if (brand.isEmpty()) return "unknown"
+        return brand.trim()
+    }
+
+    /// 通过Wifi连接ADB设备
+    fun wifiConnect(ipAndPort: String, block: (Boolean) -> Unit) {
+        launch {
+            val command = "adb connect $ipAndPort".formatAdbCommand("")
+            ShellUtils.shell(command) { success, error ->
+                if (error.isNotBlank() || !success.contains("connected")) {
+                    block.invoke(false)
+                    return@shell
+                }
+                block.invoke(true)
+            }
+        }
     }
 }

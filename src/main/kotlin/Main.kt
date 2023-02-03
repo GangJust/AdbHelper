@@ -3,7 +3,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
@@ -23,8 +26,7 @@ import utils.ShellUtils
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.lang.Exception
-import java.util.Properties
+import java.util.*
 
 
 class AppLogic : AbstractLogic() {
@@ -135,6 +137,7 @@ class App(private var application: ApplicationScope) : AbstractView<AppState>() 
                                                     value = adbDir,
                                                     hintText = "请输入可执行adb所在路径",
                                                     textStyle = TextStyleRes.bodyMedium,
+                                                    fillMaxWidth = true,
                                                     onValueChange = { adbDir.value = it },
                                                 )
                                             }
