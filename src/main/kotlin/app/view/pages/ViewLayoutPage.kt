@@ -4,12 +4,13 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.rounded.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,10 +24,10 @@ import app.state.pages.ViewLayoutState
 import base.mvvm.AbstractView
 import base.mvvm.ViewCompose
 import compose.*
+import extensions.right
 import res.ColorRes
 import res.IconRes
 import res.TextStyleRes
-import extensions.right
 
 class ViewLayoutPage : AbstractView<ViewLayoutState>() {
     override fun createState() = ViewLayoutState()
@@ -109,7 +110,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                     },
                     content = {
                         Icon(
-                            imageVector = Icons.Default.Search,
+                            imageVector = Icons.Rounded.Search,
                             contentDescription = "搜索",
                             modifier = Modifier.size(24.dp)
                         )
@@ -126,7 +127,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                 },
                 content = {
                     Icon(
-                        imageVector = Icons.Default.Refresh,
+                        imageVector = Icons.Rounded.Refresh,
                         contentDescription = "载入",
                         modifier = Modifier.size(24.dp)
                     )
@@ -221,7 +222,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
         node: LayoutTree,
     ) {
         Card(
-            elevation = 2.dp,
+            elevation = 4.dp,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.align(Alignment.Center).padding(vertical = 16.dp).sizeIn(maxWidth = 440.dp),
             content = {
@@ -239,7 +240,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                                 onClick = { ComposeDialog.hide() },
                                 content = {
                                     Icon(
-                                        imageVector = Icons.Default.Close,
+                                        imageVector = Icons.Rounded.Close,
                                         tint = ColorRes.icon,
                                         contentDescription = "关闭",
                                         modifier = Modifier.size(18.dp)
@@ -250,15 +251,15 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                     )
                     VerScrollableContainer(contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)) {
                         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-                            NodeDescDialogItem("index", node.index.nothingWord())
-                            NodeDescDialogItem("package", node.packageName.nothingWord())
-                            NodeDescDialogItem("className", node.className.nothingWord())
-                            NodeDescDialogItem("id", node.resourceId.nothingWord())
-                            NodeDescDialogItem("text", node.text.nothingWord())
-                            NodeDescDialogItem("contentDesc", node.contentDesc.nothingWord())
+                            NodeDescDialogItem("index", node.index)
+                            NodeDescDialogItem("package", node.packageName)
+                            NodeDescDialogItem("className", node.className)
+                            NodeDescDialogItem("id", node.resourceId)
+                            NodeDescDialogItem("text", node.text)
+                            NodeDescDialogItem("contentDesc", node.contentDesc)
                             NodeDescDialogItem("password", node.password)
                             NodeDescDialogItem("enabled", node.enabled)
-                            NodeDescDialogItem("checkable", node.checkable.nothingWord())
+                            NodeDescDialogItem("checkable", node.checkable)
                             NodeDescDialogItem("checked", node.checked)
                             NodeDescDialogItem("clickable", node.clickable)
                             NodeDescDialogItem("longClickable", node.longClickable)
@@ -282,7 +283,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
         singleLine: Boolean = true,
     ) {
         Card(
-            elevation = 2.dp,
+            elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.padding(vertical = 8.dp),
             content = {
@@ -295,9 +296,10 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                         style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier.padding(vertical = 8.dp).weight(3f),
                     )
-                    BasicTextField(
-                        value = value,
-                        readOnly = true,
+                    CustomTextField(
+                        value = mutableStateOf(value),
+                        enabled = true,
+                        hintText = "该属性没有值",
                         singleLine = singleLine,
                         onValueChange = { /* BasicTextField 可以响应 Ctrl+A 组合按键, 这里禁止编辑 */ },
                         textStyle = TextStyleRes.bodyMedium,
@@ -370,7 +372,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                                         onClick = { state.previousResult() },
                                         content = {
                                             Icon(
-                                                imageVector = Icons.Default.KeyboardArrowUp,
+                                                imageVector = Icons.Rounded.KeyboardArrowUp,
                                                 contentDescription = "向上",
                                                 tint = ColorRes.icon,
                                                 modifier = Modifier.size(18.dp)
@@ -383,7 +385,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                                         onClick = { state.nextResult() },
                                         content = {
                                             Icon(
-                                                imageVector = Icons.Default.KeyboardArrowDown,
+                                                imageVector = Icons.Rounded.KeyboardArrowDown,
                                                 contentDescription = "向下",
                                                 tint = ColorRes.icon,
                                                 modifier = Modifier.size(18.dp)
@@ -401,7 +403,7 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
 
     /// 扩展方法
     private fun String.nothingWord(): String {
-        if (this.isBlank()) return "无"
+        if (this.isBlank()) return ""
         return this
     }
 }

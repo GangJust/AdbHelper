@@ -8,8 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -24,10 +24,10 @@ import app.model.AppDesc
 import app.state.pages.AppManagerState
 import base.mvvm.AbstractView
 import compose.*
+import extensions.toFileLength
 import res.ColorRes
 import res.IconRes
 import res.TextStyleRes
-import extensions.toFileLength
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
@@ -178,7 +178,7 @@ class AppManagerPage : AbstractView<AppManagerState>() {
                     },
                     content = {
                         Icon(
-                            imageVector = Icons.Default.Search,
+                            imageVector = Icons.Rounded.Search,
                             contentDescription = "搜索",
                             tint = ColorRes.icon,
                             modifier = Modifier.size(18.dp),
@@ -189,7 +189,7 @@ class AppManagerPage : AbstractView<AppManagerState>() {
                     onClick = { state.reloadAppList() },
                     content = {
                         Icon(
-                            imageVector = Icons.Default.Refresh,
+                            imageVector = Icons.Rounded.Refresh,
                             contentDescription = "刷新",
                             tint = ColorRes.icon,
                             modifier = Modifier.size(18.dp),
@@ -219,7 +219,7 @@ class AppManagerPage : AbstractView<AppManagerState>() {
     @Composable
     private fun AppListItem(appDesc: AppDesc) {
         Card(
-            elevation = 2.dp,
+            elevation = 4.dp,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             content = {

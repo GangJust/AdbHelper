@@ -11,5 +11,5 @@ data class AppDesc(
     var lastUpdateTime: String = "",
     var apkSigningVersion: String = "unknown",
     var installedPath: String = "unknown",
-    var length: Int = 0,
+    var length: Long = 0,
 )

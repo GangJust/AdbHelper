@@ -18,6 +18,7 @@ import androidx.compose.ui.window.WindowScope
 import kotlinx.coroutines.*
 import res.ColorRes
 import res.TextStyleRes
+import kotlin.coroutines.EmptyCoroutineContext
 
 //Toast控制器
 class ComposeToast private constructor() {
@@ -32,7 +33,7 @@ class ComposeToast private constructor() {
             instance.toastText.value = text
             if (!instance.isShowing) {
                 cancel()
-                instance.job = GlobalScope.launch {
+                instance.job = CoroutineScope(EmptyCoroutineContext).launch {
                     instance.toastStatus.value = true
                     delay(duration)
                     instance.toastStatus.value = false
@@ -43,8 +44,9 @@ class ComposeToast private constructor() {
 
         fun cancel() {
             val job = instance.job ?: return
-            if (job.isCancelled || job.isCompleted) return
-            job.cancel()
+            if (job.isActive) {
+                job.cancel()
+            }
         }
 
         fun defaultToastController(): ComposeToast = instance

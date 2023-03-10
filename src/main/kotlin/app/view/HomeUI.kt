@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -191,26 +191,27 @@ class HomeUI(
     /// 右侧
     @Composable
     private fun RightContent() {
+        //主要视图, 统一加载, 选择切换
+        val activityHistoryPage = ActivityPage()
+        val appManagerPage = AppManagerPage()
+        val fileSystemPage = FileSystemPage()
+        val portForwardPage = PortForwardPage()
+        val viewLayoutPage = ViewLayoutPage()
+        val unknownPage = UnknownPage()
         CustomScaffold(
             application = application,
             windowScope = windowScope,
             windowState = windowState,
             title = {},
             content = {
-                //主要视图, 统一加载, 选择切换
-                val activityHistoryPage = ActivityPage()
-                val appManagerPage = AppManagerPage()
-                val portForwardPage = PortForwardPage()
-                val viewLayoutPage = ViewLayoutPage()
-                val unknownPage = UnknownPage()
-
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     ViewCompose {
                         when (state.leftMenuSelectIndex.value) {
                             0 -> activityHistoryPage
                             1 -> appManagerPage
-                            2 -> portForwardPage
-                            3 -> viewLayoutPage
+                            2 -> fileSystemPage
+                            3 -> portForwardPage
+                            4 -> viewLayoutPage
                             else -> unknownPage
                         }
                     }
@@ -218,7 +219,6 @@ class HomeUI(
             }
         )
     }
-
 
     @OptIn(ExperimentalAnimationApi::class)
     @Composable
@@ -257,7 +257,7 @@ class HomeUI(
                                     onClick = { state.loadDevices() },
                                     content = {
                                         Icon(
-                                            imageVector = Icons.Default.Refresh,
+                                            imageVector = Icons.Rounded.Refresh,
                                             contentDescription = "refresh",
                                             tint = ColorRes.icon,
                                             modifier = Modifier.size(18.dp)
@@ -342,8 +342,7 @@ class HomeUI(
         }
     }
 
-
-    ///增加wifi连接设备
+    ///wifi连接设备
     @Composable
     private fun DialogContentConnectWifiDevice() {
         val textValue = mutableStateOf("")
@@ -362,6 +361,7 @@ class HomeUI(
                 Row {
                     Spacer(modifier = Modifier.weight(1f))
                     CardButton(
+                        modifier = Modifier,
                         onClick = {
                             if (textValue.value.isBlank()) return@CardButton
                             if (!textValue.value.contains("^((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?):([0-9]|[1-9]\\d{1,3}|[1-5]\\d{4}|6[0-4]\\d{4}|65[0-4]\\d{2}|655[0-2]\\d|6553[0-5])\$".toRegex())) {
@@ -382,6 +382,7 @@ class HomeUI(
                             Text(
                                 text = "连接",
                                 style = TextStyleRes.bodyMediumSurface,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
                             )
                         }
                     )

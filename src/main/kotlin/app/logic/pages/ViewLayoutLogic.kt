@@ -15,11 +15,11 @@ class ViewLayoutLogic : AbstractLogic() {
      * 可能存在问题: 比如 MiUi 会报 FileNotFoundException “/data/system/theme_config/theme_compatibility.xml”
      *             但是仍然能够取到布局信息
      */
-    suspend fun uiautomatorDump(device: String, block: (success:String, fail:String) -> Unit): String {
+    suspend fun uiautomatorDump(device: String, block: (success: String, fail: String) -> Unit): String {
         val command = "adb exec-out uiautomator dump /dev/tty".formatAdbCommand(device)
 
         var layoutXml = ""
-        ShellUtils.shell(command) { success, error ->
+        ShellUtils.shell(command = command) { success, error ->
             if (error.isNotBlank() && !success.contains("<?xml")) {
                 block.invoke("", "布局读取失败!")
                 return@shell

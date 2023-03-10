@@ -18,7 +18,7 @@ fun Int.forIndex(block: (i: Int) -> Unit) {
     }
 }
 
-fun Int.toFileLength(): String {
+fun Long.toFileLength(): String {
     val kb = this / 1024.0f
     val mb = kb / 1024.0f
     val gb = mb / 1024.0f

@@ -12,6 +12,8 @@ import base.mvvm.AbstractState
 import base.mvvm.StateManager
 import compose.ComposeOverlay
 import compose.ComposeToast
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import org.dom4j.DocumentHelper
 import org.dom4j.Element
 
@@ -19,6 +21,8 @@ class ViewLayoutState : AbstractState<ViewLayoutLogic>() {
     override fun createLogic() = ViewLayoutLogic()
     private val homeState = StateManager.findState<HomeState>(HomeUI::class.java)
     private val device = homeState?.currentDevice?.value ?: ""
+
+    private var job: Job? = null
 
     // 视图树
     val layoutTree = mutableStateListOf<LayoutTree>()
@@ -40,7 +44,10 @@ class ViewLayoutState : AbstractState<ViewLayoutLogic>() {
     /// 加载布局
     fun loadLayoutXml() {
         ComposeToast.show("正在加载布局信息, 请稍后..")
-        launch {
+        if (job?.isActive == true) {
+            job?.cancel("重新加载布局信息!")
+        }
+        job = launch {
             val layoutXml = logic.uiautomatorDump(device) { success, fail ->
                 if (fail.isNotEmpty()) {
                     ComposeToast.show("布局获取失败!")

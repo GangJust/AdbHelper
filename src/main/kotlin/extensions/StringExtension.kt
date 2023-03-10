@@ -3,7 +3,7 @@ package extensions
 import java.lang.IndexOutOfBoundsException
 import java.nio.charset.Charset
 
-/// 获取某个字符串中间的文本, 失败返回空字符串
+// 获取某个字符串中间的文本, 失败返回空字符串
 fun String.middle(start: String, end: String, reverse: Boolean = false): String {
     if (this.isEmpty() || !this.contains(start) || !this.contains(end)) return ""
 
@@ -45,4 +45,19 @@ fun String.regexFind(regex: Regex): Array<String> {
 
 fun String.encodingTo(charset: Charset): String {
     return String(this.toByteArray(), charset)
+}
+
+// 反转文件间隔符号
+fun String.pathSeparator(): String {
+    return this.replace("\\", "/")
+}
+
+// 替换大部分路径特殊字符
+fun String.pathFormat(): String {
+    return this.replace("'","\\'") //首先替换单引号
+        .replace("(", "'('")
+        .replace(")", "')'")
+        .replace("@", "'@'")
+        .replace("&", "'&'")
+        .replace(" ", "' '")
 }

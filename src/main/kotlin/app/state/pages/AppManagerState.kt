@@ -14,7 +14,7 @@ import compose.ComposeOverlay
 import compose.ComposeToast
 import extensions.regexFind
 import extensions.right
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import utils.*
 import java.io.File
 import javax.swing.filechooser.FileSystemView
@@ -25,8 +25,10 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
     private val homeState = StateManager.findState<HomeState>(HomeUI::class.java)
     private val device = homeState?.currentDevice?.value ?: ""
 
-    val currentTabIndex = mutableStateOf(0)
 
+    private var job: Job? = null
+
+    val currentTabIndex = mutableStateOf(0)
     private val allAppLazyListState = LazyListState()
     private val systemAppLazyListState = LazyListState()
     private val userAppLazyListState = LazyListState()
@@ -90,7 +92,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
         val command = "adb shell pm path $packageName".formatAdbCommand(device)
 
         var appPath = ""
-        ShellUtils.shell(command) { success, error ->
+        ShellUtils.shell(command = command) { success, error ->
             if (error.isNotEmpty()) return@shell
             appPath = success.trim().right("package:")
         }
@@ -102,7 +104,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
     private suspend fun getAppBasicDesc(packageName: String, appDesc: AppDesc) {
         val command = "adb shell dumpsys package $packageName".formatAdbCommand(device)
 
-        ShellUtils.shell(command) { success, error ->
+        ShellUtils.shell(command = command) { success, error ->
             if (error.isNotEmpty()) return@shell
             appDesc.firstInstallTime = success.regexFind(Regex("firstInstallTime=(.*)\\s"), -1)
             appDesc.lastUpdateTime = success.regexFind(Regex("lastUpdateTime=(.*)\\s"), -1)
@@ -120,7 +122,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
         val command = "adb shell stat -c '%s' $installedPath".formatAdbCommand(device)
 
         var appLength = ""
-        ShellUtils.shell(command) { success, error ->
+        ShellUtils.shell(command = command) { success, error ->
             if (error.isNotEmpty()) return@shell
             appLength = success.trim()
         }
@@ -134,7 +136,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
         appDesc.packageName = packageName
         appDesc.isSystemApp = isSystemApp
         appDesc.installedPath = getAppInstallPath(packageName)
-        appDesc.length = getAppLength(appDesc.installedPath).toIntOrNull() ?: 0
+        appDesc.length = getAppLength(appDesc.installedPath).toLongOrNull() ?: 0
         getAppBasicDesc(packageName, appDesc)
 
         return appDesc
@@ -159,7 +161,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
 
         val packageNameList = mutableListOf<String>()
 
-        ShellUtils.shell(command) { success, error ->
+        ShellUtils.shell(command = command) { success, error ->
             if (error.isNotEmpty()) return@shell
             success.split("\n").forEach {
                 if (it.trim().isNotEmpty()) {
@@ -199,7 +201,10 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
 
     ///加载App列表
     private fun loadAppList() {
-        launch {
+        if (job?.isActive == true) {
+            job?.cancel("重新加载App列表!")
+        }
+        job = launch {
             val a1 = async { loadSystemApp() }
             val a2 = async { loadUserApp() }
         }
@@ -310,7 +315,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
         val command = "adb install -r \"$path\"".formatAdbCommand(device)
         apkInstallMessage.value = "正在安装, 请注意设备安装弹窗.."
         launch {
-            ShellUtils.shell(command) { success, error ->
+            ShellUtils.shell(command = command) { success, error ->
                 if (error.isNotEmpty()) {
                     apkInstallMessage.value = "安装失败!\n$error"
                     return@shell
@@ -330,7 +335,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
             val desktop = FileSystemView.getFileSystemView().homeDirectory
             val exportApkName = File(desktop, appDesc.packageName.plus(".apk"))
             val command = "adb pull ${appDesc.installedPath} ${exportApkName.absolutePath}".formatAdbCommand(device)
-            ShellUtils.shell(command) { success, error ->
+            ShellUtils.shell(command = command) { success, error ->
                 if (error.isNotBlank()) {
                     ComposeToast.show("导出失败!")
                     return@shell
@@ -351,7 +356,7 @@ class AppManagerState : AbstractState<AppManagerLogic>() {
 
         launch {
             val command = "adb uninstall ${appDesc.packageName}".formatAdbCommand(device)
-            ShellUtils.shell(command) { success, error ->
+            ShellUtils.shell(command = command) { success, error ->
                 if (error.isNotBlank()) {
                     ComposeToast.show("卸载失败!")
                     return@shell

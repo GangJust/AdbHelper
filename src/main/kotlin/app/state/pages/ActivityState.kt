@@ -7,19 +7,21 @@ import app.state.HomeState
 import app.view.HomeUI
 import base.mvvm.AbstractState
 import base.mvvm.StateManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
+import compose.ComposeToast
 import utils.ShellUtils
 import utils.formatAdbCommand
 import extensions.middle
+import extensions.pathSeparator
+import kotlinx.coroutines.*
 import java.util.Calendar
+import javax.swing.filechooser.FileSystemView
 
 class ActivityState : AbstractState<ActivityLogic>() {
     override fun createLogic() = ActivityLogic()
     private val homeState = StateManager.findState<HomeState>(HomeUI::class.java)
     private val device = homeState?.currentDevice?.value ?: ""
 
+    private var job: Job? = null
     val packageName = mutableStateOf("")
     val processName = mutableStateOf("")
     val launchActivity = mutableStateOf("")
@@ -35,15 +37,24 @@ class ActivityState : AbstractState<ActivityLogic>() {
     }
 
     /// 屏幕截图(并保存)
-    suspend fun screenshot(): Unit {
-        val command = "adb exec-out screencap -p > ${Calendar.getInstance().timeInMillis}.png"
-        ShellUtils.shell(command)
+    fun screenshot() {
+        launch {
+            val desktop = FileSystemView.getFileSystemView().homeDirectory.path.pathSeparator()
+            val command = "adb exec-out screencap -p > \"${desktop}/${Calendar.getInstance().timeInMillis}.png\"".formatAdbCommand(device)
+            ShellUtils.shell(command = command) { _, error ->
+                if (error.isNotBlank()) {
+                    ComposeToast.show("屏幕截取失败!")
+                    return@shell
+                }
+                ComposeToast.show("屏幕截取成功!")
+            }
+        }
     }
 
     /// 获取当前包名
     private suspend fun getPackageName() {
         val command = "adb shell dumpsys activity activities | grep packageName".formatAdbCommand(device)
-        val result = ShellUtils.shell(command)
+        val result = ShellUtils.shell(command = command)
         if (result.isBlank()) {
             packageName.value = "没有获取到包名, 请检查ADB设备是否已断开"
             return
@@ -58,7 +69,7 @@ class ActivityState : AbstractState<ActivityLogic>() {
     /// 获取当前进程
     private suspend fun getProcessName() {
         val command = "adb shell dumpsys activity activities | grep processName".formatAdbCommand(device)
-        val result = ShellUtils.shell(command)
+        val result = ShellUtils.shell(command = command)
         if (result.isBlank()) {
             processName.value = "没有获取到进程, 请检查ADB设备是否已断开"
             return
@@ -73,7 +84,7 @@ class ActivityState : AbstractState<ActivityLogic>() {
     /// 获取启动活动
     private suspend fun getLaunchActivity() {
         val command = "adb shell dumpsys activity activities | grep mActivityComponent".formatAdbCommand(device)
-        val result = ShellUtils.shell(command)
+        val result = ShellUtils.shell(command = command)
         if (result.isBlank()) {
             launchActivity.value = "没有获取到启动活动, 请检查ADB设备是否已断开"
             return
@@ -88,7 +99,7 @@ class ActivityState : AbstractState<ActivityLogic>() {
     /// 获取前台Activity
     private suspend fun getResumedActivity() {
         val command = "adb shell dumpsys activity activities | grep mResumedActivity".formatAdbCommand(device)
-        val result = ShellUtils.shell(command)
+        val result = ShellUtils.shell(command = command)
         if (result.isBlank()) {
             resumedActivity.value = "没有获取到前台活动, 请检查ADB设备是否锁屏或已断开"
             return
@@ -102,7 +113,7 @@ class ActivityState : AbstractState<ActivityLogic>() {
     /// 获取上次Activity
     private suspend fun getLastHistoryActivity() {
         val command = "adb shell dumpsys activity activities | grep mLastPausedActivity".formatAdbCommand(device)
-        val result = ShellUtils.shell(command)
+        val result = ShellUtils.shell(command = command)
 
         if (result.isBlank()) {
             lastPausedActivity.value = "没有获取到上次活动, 请检查ADB设备是否已断开"
@@ -117,7 +128,7 @@ class ActivityState : AbstractState<ActivityLogic>() {
     /// 获取某个Package下的Activity的堆栈列表(一般是当前package)
     private suspend fun getStackActivities(packageName: String) {
         val command = "adb shell dumpsys activity activities | grep $packageName | grep Activities".formatAdbCommand(device)
-        val result = ShellUtils.shell(command)
+        val result = ShellUtils.shell(command = command)
 
         stackActivities.clear()
         if (result.isBlank()) {
@@ -147,7 +158,10 @@ class ActivityState : AbstractState<ActivityLogic>() {
 
     /// 加载当前Activity
     fun loadActivity() {
-        launch {
+        if (job?.isActive == true) {
+            job?.cancel("重新获取Activity信息!")
+        }
+        job = launch {
             withContext(Dispatchers.IO) { getPackageName() }
             //并发
             val a1 = async(Dispatchers.IO) { getProcessName() }

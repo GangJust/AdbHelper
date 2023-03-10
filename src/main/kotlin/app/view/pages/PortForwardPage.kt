@@ -13,7 +13,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -33,7 +32,7 @@ class PortForwardPage : AbstractView<PortForwardState>() {
 
     init {
         state.launch {
-            delay(100)
+            delay(500)
             state.sendMessage("命令列表")
         }
     }

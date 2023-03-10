@@ -18,8 +18,20 @@ class HomeState : AbstractState<HomeLogic>() {
     val leftMenuSelectIndex = mutableStateOf(0)
 
     // leftMenuIconList.size == leftMenuTitleList.size
-    val leftMenuIconList = mutableStateListOf(IconRes.browseActivity, IconRes.apkDocument, IconRes.portForward, IconRes.viewLayout)
-    val leftMenuTitleList = mutableStateListOf("活动信息", "应用管理", "端口转发", "布局分析")
+    val leftMenuIconList = mutableStateListOf(
+        IconRes.browseActivity,
+        IconRes.apkDocument,
+        IconRes.fileSystem,
+        IconRes.portForward,
+        IconRes.viewLayout,
+    )
+    val leftMenuTitleList = mutableStateListOf(
+        "活动信息",
+        "应用管理",
+        "文件管理",
+        "端口转发",
+        "布局分析",
+    )
 
     val currentDevice = mutableStateOf("")
     val devicesList = mutableStateListOf<String>()
@@ -39,7 +51,7 @@ class HomeState : AbstractState<HomeLogic>() {
             delay(200L)
 
             val command = "adb devices".formatAdbCommand("")
-            val devices = ShellUtils.shell(command).trim()
+            val devices = ShellUtils.shell(command = command).trim()
             val splitList = devices.split("\n").filter { it.trim().isNotEmpty() }
 
             //每次加载重置
@@ -71,7 +83,7 @@ class HomeState : AbstractState<HomeLogic>() {
     /// 获取某个ADB设备的系统架构
     private suspend fun getAbi(device: String): String {
         val command = "adb shell getprop ro.product.cpu.abi".formatAdbCommand(device)
-        val abi = ShellUtils.shell(command)
+        val abi = ShellUtils.shell(command = command)
         if (abi.isEmpty()) return "unknown"
         return abi.trim()
     }
@@ -79,7 +91,7 @@ class HomeState : AbstractState<HomeLogic>() {
     /// 获取某个ADB设备的系统品牌
     private suspend fun getBrand(device: String): String {
         val command = "adb shell getprop ro.product.brand".formatAdbCommand(device)
-        val brand = ShellUtils.shell(command)
+        val brand = ShellUtils.shell(command = command)
         if (brand.isEmpty()) return "unknown"
         return brand.trim()
     }
@@ -88,7 +100,7 @@ class HomeState : AbstractState<HomeLogic>() {
     fun wifiConnect(ipAndPort: String, block: (Boolean) -> Unit) {
         launch {
             val command = "adb connect $ipAndPort".formatAdbCommand("")
-            ShellUtils.shell(command) { success, error ->
+            ShellUtils.shell(command = command) { success, error ->
                 if (error.isNotBlank() || !success.contains("connected")) {
                     block.invoke(false)
                     return@shell

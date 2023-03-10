@@ -8,6 +8,7 @@ object ColorRes {
     val secondaryText = Color(0XFF666666)
     val onSurface = Color(0x2243DD87)
 
+    val foreground = Color(0XFFEEEEEE)
     val divider = Color(0XFFDCDCDC)
     val description = Color(0XFF999999)
     val icon = Color(0XFF999999)

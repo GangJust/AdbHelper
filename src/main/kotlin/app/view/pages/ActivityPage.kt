@@ -6,7 +6,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import app.comm.BaseScaffold
 import app.state.pages.ActivityState
 import base.mvvm.AbstractView
 import res.ColorRes
+import res.IconRes
 import res.TextStyleRes
 
 /// 活动信息
@@ -27,18 +29,7 @@ class ActivityPage : AbstractView<ActivityState>() {
     override fun viewCompose() {
         BaseScaffold(
             floatingActionButton = {
-                FloatingActionButton(
-                    contentColor = Color.White,
-                    backgroundColor = ColorRes.primary,
-                    onClick = { state.loadActivity() },
-                    content = {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "刷新",
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                )
+                FloatingActionButtonGroup()
             },
             bottomBar = {
                 BoxWithConstraints(
@@ -100,6 +91,41 @@ class ActivityPage : AbstractView<ActivityState>() {
         }
     }
 
+    /// 悬浮按钮组
+    @Composable
+    private fun FloatingActionButtonGroup() {
+        Column(modifier = Modifier.padding(vertical = 12.dp)) {
+            FloatingActionButton(
+                contentColor = Color.White,
+                backgroundColor = ColorRes.primary,
+                onClick = {
+                    state.screenshot()
+                },
+                content = {
+                    Icon(
+                        painter = IconRes.screenshot,
+                        contentDescription = "截屏",
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.padding(vertical = 8.dp))
+            FloatingActionButton(
+                contentColor = Color.White,
+                backgroundColor = ColorRes.primary,
+                onClick = { state.loadActivity() },
+                content = {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = "刷新",
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            )
+            Spacer(modifier = Modifier.height(72.dp)) //底部垫高
+        }
+    }
+
     //开关
     @Composable
     private fun SwitchItem(
@@ -137,7 +163,7 @@ class ActivityPage : AbstractView<ActivityState>() {
         singleLine: Boolean = false,
     ) {
         Card(
-            elevation = 2.dp,
+            elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
@@ -170,7 +196,7 @@ class ActivityPage : AbstractView<ActivityState>() {
         vararg values: String,
     ) {
         Card(
-            elevation = 2.dp,
+            elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.padding(vertical = 8.dp)
         ) {

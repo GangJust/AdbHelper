@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import app.state.pages.FileSystemState
 import app.view.HomeUI
 import app.view.pages.CustomScaffold
 import app.view.pages.ErrorPage
@@ -84,10 +85,10 @@ class App(private var application: ApplicationScope) : AbstractView<AppState>() 
     @Composable
     private fun ConfigWindow() {
         val windowState = rememberWindowState(
-            size = DpSize(320.dp, 280.dp),
+            size = DpSize(380.dp, 280.dp),
             position = WindowPosition.Aligned(Alignment.Center),
         )
-        val adbDir = mutableStateOf("")
+        val adbDir = mutableStateOf("tools")
 
         Window(
             onCloseRequest = { application.exitApplication() },
@@ -99,7 +100,7 @@ class App(private var application: ApplicationScope) : AbstractView<AppState>() 
             content = {
                 Card(
                     shape = RoundedCornerShape(12.dp),
-                    elevation = 2.dp,
+                    elevation = 4.dp,
                     border = BorderStroke(1.dp, ColorRes.icon.copy(alpha = 0.3f)),
                     modifier = Modifier.padding(12.dp),
                     content = {
@@ -135,7 +136,7 @@ class App(private var application: ApplicationScope) : AbstractView<AppState>() 
                                                 CustomTextField(
                                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
                                                     value = adbDir,
-                                                    hintText = "请输入可执行adb所在路径",
+                                                    hintText = "请输入可执行adb所在路径 (默认tools即可)",
                                                     textStyle = TextStyleRes.bodyMedium,
                                                     fillMaxWidth = true,
                                                     onValueChange = { adbDir.value = it },
@@ -157,7 +158,8 @@ class App(private var application: ApplicationScope) : AbstractView<AppState>() 
                                                             return@TextButton
                                                         }
 
-                                                        val adbFile = adbDirFile.listFiles { _, name -> name.contains("^adb(\\.exe)?\$".toRegex()) }
+                                                        val adbFile =
+                                                            adbDirFile.listFiles { _, name -> name.contains("^adb(\\.exe)?\$".toRegex()) }
                                                         if (adbFile == null || adbFile.isEmpty()) {
                                                             ComposeToast.show("可执行adb不存在!")
                                                             return@TextButton
@@ -216,7 +218,7 @@ class App(private var application: ApplicationScope) : AbstractView<AppState>() 
                     content = {
                         Card(
                             shape = RoundedCornerShape(12.dp),
-                            elevation = 2.dp,
+                            elevation = 4.dp,
                             border = BorderStroke(1.dp, ColorRes.icon.copy(alpha = 0.3f)),
                             modifier = Modifier.padding(12.dp),
                             content = {
