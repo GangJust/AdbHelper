@@ -1,5 +1,6 @@
 package app.view.pages
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -7,19 +8,22 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.loadImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.rememberDialogState
 import app.comm.BaseScaffold
 import app.state.pages.ActivityState
 import base.mvvm.AbstractView
 import res.ColorRes
 import res.IconRes
 import res.TextStyleRes
+import java.io.FileInputStream
 
 /// 活动信息
 class ActivityPage : AbstractView<ActivityState>() {
@@ -54,40 +58,45 @@ class ActivityPage : AbstractView<ActivityState>() {
                         }
                     },
                 )
+            },
+            content = {
+                Column(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
+                    SingleHistoryItem(
+                        title = "当前包名:",
+                        value = state.packageName.value,
+                        singleLine = state.singleTextLine.value,
+                    )
+                    SingleHistoryItem(
+                        title = "当前进程:",
+                        value = state.processName.value,
+                        singleLine = state.singleTextLine.value,
+                    )
+                    SingleHistoryItem(
+                        title = "启动活动:",
+                        value = state.launchActivity.value,
+                        singleLine = state.singleTextLine.value,
+                    )
+                    SingleHistoryItem(
+                        title = "前台活动:",
+                        value = state.resumedActivity.value,
+                        singleLine = state.singleTextLine.value,
+                    )
+                    SingleHistoryItem(
+                        title = "上次活动:",
+                        value = state.lastPausedActivity.value,
+                        singleLine = state.singleTextLine.value,
+                    )
+                    MultipleHistoryItem(
+                        title = "活动堆栈:",
+                        values = state.stackActivities.toTypedArray().reversedArray(),
+                        singleLine = state.singleTextLine.value,
+                    )
+                }
             }
-        ) {
-            Column(modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)) {
-                SingleHistoryItem(
-                    title = "当前包名:",
-                    value = state.packageName.value,
-                    singleLine = state.singleTextLine.value,
-                )
-                SingleHistoryItem(
-                    title = "当前进程:",
-                    value = state.processName.value,
-                    singleLine = state.singleTextLine.value,
-                )
-                SingleHistoryItem(
-                    title = "启动活动:",
-                    value = state.launchActivity.value,
-                    singleLine = state.singleTextLine.value,
-                )
-                SingleHistoryItem(
-                    title = "前台活动:",
-                    value = state.resumedActivity.value,
-                    singleLine = state.singleTextLine.value,
-                )
-                SingleHistoryItem(
-                    title = "上次活动:",
-                    value = state.lastPausedActivity.value,
-                    singleLine = state.singleTextLine.value,
-                )
-                MultipleHistoryItem(
-                    title = "活动堆栈:",
-                    values = state.stackActivities.toTypedArray().reversedArray(),
-                    singleLine = state.singleTextLine.value,
-                )
-            }
+        )
+
+        if (state.showScreenshotPreviewWindowDialog.value) {
+            screenshotPreviewWindowDialog()
         }
     }
 
@@ -136,23 +145,24 @@ class ActivityPage : AbstractView<ActivityState>() {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        ) {
-            Text(
-                text = title,
-                style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
-            )
-            Spacer(modifier = Modifier.padding(horizontal = 2.dp))
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedTrackColor = ColorRes.onSurface,
-                    checkedThumbColor = ColorRes.primary,
-                    uncheckedTrackColor = Color.Gray,
-                ),
-            )
-        }
+            modifier = Modifier.padding(horizontal = 16.dp),
+            content = {
+                Text(
+                    text = title,
+                    style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                )
+                Spacer(modifier = Modifier.padding(horizontal = 2.dp))
+                Switch(
+                    checked = checked,
+                    onCheckedChange = onCheckedChange,
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = ColorRes.onSurface,
+                        checkedThumbColor = ColorRes.primary,
+                        uncheckedTrackColor = Color.Gray,
+                    ),
+                )
+            }
+        )
     }
 
     //单条
@@ -165,27 +175,28 @@ class ActivityPage : AbstractView<ActivityState>() {
         Card(
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            ) {
-                Text(
-                    text = title,
-                    style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
-                BasicTextField(
-                    value = value,
-                    readOnly = true,
-                    singleLine = singleLine,
-                    onValueChange = { /* BasicTextField 可以响应 Ctrl+A 组合按键, 这里禁止编辑 */ },
-                    textStyle = TextStyleRes.bodyMedium,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                )
+            modifier = Modifier.padding(vertical = 8.dp),
+            content = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = title,
+                        style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
+                    BasicTextField(
+                        value = value,
+                        readOnly = true,
+                        singleLine = singleLine,
+                        onValueChange = { /* BasicTextField 可以响应 Ctrl+A 组合按键, 这里禁止编辑 */ },
+                        textStyle = TextStyleRes.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    )
+                }
             }
-        }
+        )
     }
 
     //多条
@@ -198,30 +209,55 @@ class ActivityPage : AbstractView<ActivityState>() {
         Card(
             elevation = 4.dp,
             shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-            ) {
-                Text(
-                    text = title,
-                    style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(vertical = 4.dp),
-                )
-                LazyColumn {
-                    items(values.size) {
-                        BasicTextField(
-                            value = values[it],
-                            readOnly = true,
-                            singleLine = singleLine,
-                            onValueChange = { /* BasicTextField 可以响应 Ctrl+A 组合按键, 这里禁止编辑 */ },
-                            textStyle = TextStyleRes.bodyMedium,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        )
+            modifier = Modifier.padding(vertical = 8.dp),
+            content = {
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = title,
+                        style = TextStyleRes.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(vertical = 4.dp),
+                    )
+                    LazyColumn {
+                        items(values.size) {
+                            BasicTextField(
+                                value = values[it],
+                                readOnly = true,
+                                singleLine = singleLine,
+                                onValueChange = { /* BasicTextField 可以响应 Ctrl+A 组合按键, 这里禁止编辑 */ },
+                                textStyle = TextStyleRes.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            )
+                        }
                     }
                 }
             }
-        }
+        )
+    }
+
+    ///屏幕(截屏)分析弹窗
+    @Composable
+    private fun screenshotPreviewWindowDialog() {
+        val size = state.wmSize.value.div(3F)
+        val dialogState = rememberDialogState(width = size.width.dp, height = size.height.dp)
+        Dialog(
+            onCloseRequest = { state.closeScreenshotPreviewWindowDialog() },
+            title = "截图预览",
+            state = dialogState,
+            content = {
+                Box(
+                    modifier = Modifier,
+                    content = {
+                        Image(
+                            modifier = Modifier,
+                            bitmap = loadImageBitmap(FileInputStream(state.tempScreenshotFile)),
+                            contentDescription = "ScreenImage"
+                        )
+                    }
+                )
+            }
+        )
     }
 }

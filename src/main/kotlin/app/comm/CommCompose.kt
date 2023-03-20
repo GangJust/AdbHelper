@@ -12,12 +12,14 @@ import res.ColorRes
 
 @Composable
 fun BaseScaffold(
+    modifier: Modifier = Modifier,
     floatingActionButton: @Composable () -> Unit = {},
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
+        modifier = modifier,
         backgroundColor = ColorRes.transparent,
         contentColor = ColorRes.transparent,
         isFloatingActionButtonDocked = true,

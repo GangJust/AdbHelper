@@ -28,7 +28,6 @@ import res.TextStyleRes
 class WindowDialogController(show: Boolean) {
     private val _dialogState = DialogState()
     private val dialogController = mutableStateOf(show)
-    var bundle: Any? = null
 
     companion object {
 

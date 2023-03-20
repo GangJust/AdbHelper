@@ -6,6 +6,7 @@ import androidx.compose.ui.res.useResource
 import androidx.compose.ui.unit.Density
 
 object IconRes {
+    val github = readIconPainter("icon/ic_github.svg")
     val windowMinimized = readIconPainter("icon/ic_window_minimized.svg")
     val windowClosed = readIconPainter("icon/ic_window_closed.svg")
     val phone = readIconPainter("icon/ic_phone.svg")
@@ -27,6 +28,7 @@ object IconRes {
     val newFolder = readIconPainter("icon/ic_new_folder.svg")
     val portForward = readIconPainter("icon/ic_port_forward.svg")
     val viewLayout = readIconPainter("icon/ic_view_layout.svg")
+    val screenshotMonitor = readIconPainter("icon/ic_screenshot_monitor.svg")
     val adb = readIconPainter("icon/ic_adb.svg")
     val exportNotes = readIconPainter("icon/ic_export_notes.svg")
     val delete = readIconPainter("icon/ic_delete.svg")

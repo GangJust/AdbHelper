@@ -18,11 +18,14 @@ import androidx.compose.ui.window.WindowScope
 import androidx.compose.ui.window.WindowState
 import base.mvvm.IView
 import base.mvvm.StateManager
+import compose.ComposeToast
 import compose.VerScrollableContainer
 import extensions.encodingTo
 import res.ColorRes
 import res.IconRes
 import res.TextStyleRes
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.nio.charset.Charset
 
 // 错误页
@@ -96,6 +99,21 @@ fun CustomScaffold(
                         Spacer(Modifier.weight(1f))
                         IconButton(
                             onClick = {
+                                val selection = StringSelection("https://github.com/GangJust/AdbHelper")
+                                Toolkit.getDefaultToolkit().systemClipboard.setContents(selection, null)
+                                ComposeToast.show("Github复制成功, 请自行打开浏览器访问!")
+                            },
+                            content = {
+                                Icon(
+                                    painter = IconRes.github,
+                                    contentDescription = "github",
+                                    tint = ColorRes.text,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        )
+                        IconButton(
+                            onClick = {
                                 windowState.isMinimized = true
                             },
                             content = {
@@ -107,7 +125,6 @@ fun CustomScaffold(
                                 )
                             }
                         )
-
                         IconButton(
                             onClick = {
                                 StateManager.clearStateMaps()

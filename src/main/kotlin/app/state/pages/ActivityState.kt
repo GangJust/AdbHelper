@@ -2,19 +2,19 @@ package app.state.pages
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Size
 import app.logic.pages.ActivityLogic
 import app.state.HomeState
 import app.view.HomeUI
 import base.mvvm.AbstractState
 import base.mvvm.StateManager
 import compose.ComposeToast
-import utils.ShellUtils
-import utils.formatAdbCommand
 import extensions.middle
 import extensions.pathSeparator
 import kotlinx.coroutines.*
-import java.util.Calendar
-import javax.swing.filechooser.FileSystemView
+import utils.ShellUtils
+import utils.formatAdbCommand
+import java.io.File
 
 class ActivityState : AbstractState<ActivityLogic>() {
     override fun createLogic() = ActivityLogic()
@@ -32,23 +32,64 @@ class ActivityState : AbstractState<ActivityLogic>() {
     val fullClassName = mutableStateOf(true)
     val singleTextLine = mutableStateOf(false)
 
+    val wmSize = mutableStateOf(Size.Zero)
+    var tempScreenshotFile: File = File("temp_screen.png")
+    val showScreenshotPreviewWindowDialog = mutableStateOf(false)
+
     init {
+        getWmSize()
         loadActivity()
     }
 
-    /// 屏幕截图(并保存)
+    /// 获取屏幕像素大小
+    private fun getWmSize() {
+        launch {
+            val command = "adb shell wm size".formatAdbCommand(device)
+            withContext(Dispatchers.IO) {
+                ShellUtils.shell(command = command) { success, error ->
+                    if (error.isNotBlank()) return@shell
+
+                    val indexStr = "Physical size:"
+                    val indexOf = success.indexOf(indexStr)
+                    if (indexOf != -1) {
+                        val sizeStr = success.substring(indexOf + indexStr.length)
+                        val (w, h) = sizeStr.split("x")
+                        wmSize.value = Size(w.toFloat(), h.toFloat())
+                    }
+                }
+            }
+        }
+    }
+
+    /// 屏幕截图
     fun screenshot() {
         launch {
-            val desktop = FileSystemView.getFileSystemView().homeDirectory.path.pathSeparator()
-            val command = "adb exec-out screencap -p > \"${desktop}/${Calendar.getInstance().timeInMillis}.png\"".formatAdbCommand(device)
-            ShellUtils.shell(command = command) { _, error ->
-                if (error.isNotBlank()) {
+            //val desktop = FileSystemView.getFileSystemView().homeDirectory.path.pathSeparator()
+            //screenshotFile = File(desktop, "${Calendar.getInstance().timeInMillis}.png")
+
+            ComposeToast.show("正在截取屏幕, 请稍后..")
+            val command = "adb exec-out screencap -p > \"${tempScreenshotFile.canonicalPath.pathSeparator()}\"".formatAdbCommand(device)
+            println(command)
+            ShellUtils.shell(command = command) { success, error ->
+                if (error.isNotBlank() || success.isNotBlank()) {
                     ComposeToast.show("屏幕截取失败!")
                     return@shell
                 }
                 ComposeToast.show("屏幕截取成功!")
+                openScreenshotPreviewWindowDialog()
             }
         }
+    }
+
+    /// 截图预览
+    fun openScreenshotPreviewWindowDialog() {
+        showScreenshotPreviewWindowDialog.value = true
+    }
+
+    /// 关闭预览
+    fun closeScreenshotPreviewWindowDialog() {
+        tempScreenshotFile.delete()
+        showScreenshotPreviewWindowDialog.value = false
     }
 
     /// 获取当前包名

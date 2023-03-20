@@ -224,7 +224,10 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
         Card(
             elevation = 4.dp,
             shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.align(Alignment.Center).padding(vertical = 16.dp).sizeIn(maxWidth = 440.dp),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(vertical = 16.dp)
+                .sizeIn(maxWidth = 440.dp),
             content = {
                 Column {
                     Row(
@@ -399,11 +402,5 @@ class ViewLayoutPage : AbstractView<ViewLayoutState>() {
                 }
             }
         )
-    }
-
-    /// 扩展方法
-    private fun String.nothingWord(): String {
-        if (this.isBlank()) return ""
-        return this
     }
 }
